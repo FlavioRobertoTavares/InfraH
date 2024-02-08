@@ -1,0 +1,7 @@
+module Controle #(
+    
+) (
+    ports
+);
+    
+endmodule
