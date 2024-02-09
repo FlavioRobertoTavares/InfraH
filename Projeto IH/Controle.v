@@ -1,7 +1,5 @@
-`include "Estados.vh"
-
 module Controle (
-    
+   
 );
-    
+    `include "Estados.vh"
 endmodule
