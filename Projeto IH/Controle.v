@@ -1,7 +1,7 @@
-module Controle #(
+`include "Estados.vh"
+
+module Controle (
     
-) (
-    ports
 );
     
 endmodule
