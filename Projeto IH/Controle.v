@@ -64,8 +64,6 @@ module Controle (
         reg [5:0]state;
         reg [3:0]counter;
 
-        
-
         //Resetando todos os registradores
         initial begin
                 `RESET;
@@ -82,12 +80,16 @@ module Controle (
 
                                 FETCH: begin
                                         if(counter < 4) begin
-                                                iorD = PC_ADDR;
+                                                //Ler instrucao
                                                 wr = MEM_READ;
+                                                iorD = PC_ADDR;
+
+                                                //PC = PC + 4
                                                 ALU_src_A = A_SRC_PC;
                                                 ALU_src_B = B_SRC_4;
                                                 ALU_op = ALU_ADD;
                                                 PC_src = PC_SRC_ALU_OUT;
+
                                                 counter = counter + 1;
                                         end
                                         else begin
@@ -106,44 +108,44 @@ module Controle (
                                                 case(OP)
                                                         TYPE_R_OP: begin
                                                                 case(funct)
-                                                                        ADD_FUNCT: state = ADD;
-                                                                        AND_FUNCT: state = AND;
-                                                                        DIV_FUNCT: state = DIV;
-                                                                        MULT_FUNCT: state = MULT;
-                                                                        JR_FUNCT: state = JR;
-                                                                        MFHI_FUNCT: state = MFHI;
-                                                                        MFLO_FUNCT: state = MFLO;
-                                                                        SLL_FUNCT: state = SLL_FUNCT;
-                                                                        SLLV_FUNCT: state = SLLV;
-                                                                        SLT_FUNCT: state = SLT;
-                                                                        SRA_FUNCT: state = SRA;
-                                                                        SRAV_FUNCT: state = SRAV;
-                                                                        SRL_FUNCT: state = SRL;
-                                                                        SUB_FUNCT: state = SUB;
+                                                                        ADD_FUNCT:   state = ADD;
+                                                                        AND_FUNCT:   state = AND;
+                                                                        DIV_FUNCT:   state = DIV;
+                                                                        MULT_FUNCT:  state = MULT;
+                                                                        JR_FUNCT:    state = JR;
+                                                                        MFHI_FUNCT:  state = MFHI;
+                                                                        MFLO_FUNCT:  state = MFLO;
+                                                                        SLL_FUNCT:   state = SLL;
+                                                                        SLLV_FUNCT:  state = SLLV;
+                                                                        SLT_FUNCT:   state = SLT;
+                                                                        SRA_FUNCT:   state = SRA;
+                                                                        SRAV_FUNCT:  state = SRAV;
+                                                                        SRL_FUNCT:   state = SRL;
+                                                                        SUB_FUNCT:   state = SUB;
                                                                         BREAK_FUNCT: state = BREAK;
-                                                                        default: state = OPCODE_INEXISTENTE;
+                                                                        default:     state = OPCODE_INEXISTENTE;
                                                                 endcase
                                                         end
                                                         //Tipo I
-                                                        ADDI_OP: state = ADDI;
+                                                        ADDI_OP:  state = ADDI;
                                                         ADDIU_OP: state = ADDIU;
-                                                        BEQ_OP: state = BEQ;
-                                                        BNE_OP: state = BNE;
-                                                        BLE_OP: state = BLE;
-                                                        BGT_OP: state = BGT;
-                                                        SRAM_OP: state = SRAM;
-                                                        LB_OP: state = LB;
-                                                        LH_OP: state = LH;
-                                                        LUI_OP: state = LUI;
-                                                        LW_OP: state = LW;
-                                                        SB_OP: state = SB;
-                                                        SH_OP: state = SH;
-                                                        SLTI_OP: state = SLTI;
+                                                        BEQ_OP:   state = BEQ;
+                                                        BNE_OP:   state = BNE;
+                                                        BLE_OP:   state = BLE;
+                                                        BGT_OP:   state = BGT;
+                                                        SRAM_OP:  state = SRAM;
+                                                        LB_OP:    state = LB;
+                                                        LH_OP:    state = LH;
+                                                        LUI_OP:   state = LUI;
+                                                        LW_OP:    state = LW;
+                                                        SB_OP:    state = SB;
+                                                        SH_OP:    state = SH;
+                                                        SLTI_OP:  state = SLTI;
                                                         //Tipo J
-                                                        J_OP: state = J;
-                                                        JAL_OP: state = JAL;
+                                                        J_OP:     state = J;
+                                                        JAL_OP:   state = JAL;
                                                         //Opcode inexistente
-                                                        default: state = OPCODE_INEXISTENTE;                   
+                                                        default:  state = OPCODE_INEXISTENTE;                   
                                                 endcase
                                         end
                                 end
