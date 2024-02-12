@@ -22,6 +22,8 @@ module Controle (
                 reg[1:0] ALU_src_B,             //ALU source B
                 reg[1:0] sh_src,                //Deslocamento source
                 reg[1:0] div_mult_ctrl,         //Div/mult control
+                reg[1:0] load_ctrl,             //Seleciona bite, half ou word
+                reg[1:0] store_ctrl,            //Seleciona bite, half ou word
                 reg[2:0] bank_write_reg,        
                 reg[2:0] bank_write_data,       
                 reg[2:0] ALU_op,                //ALU operation
@@ -37,9 +39,7 @@ module Controle (
         output  reg wr,                         //Memory read/write
                     ir_write,                   //Instruction register write signal
                     PC_write,                   
-                    bank_write,                 
-                    load_ctrl,                  
-                    store_ctrl,                 
+                    bank_write,                                 
                     EPC_write,                  //Exception PC register write signal
                     A_write,                    //A operand register write signal
                     B_write,                    //B operand register write signal
@@ -51,6 +51,7 @@ module Controle (
 );
         `include "Estados.vh"
         `include "Opcodes.vh"
+        `include "Param_Muxes.vh"
 
         task Compare(input [1:0]src_A, input [1:0]src_B);
                 begin 
@@ -153,14 +154,14 @@ module Controle (
                                                         BNE_OP:   state = BNE;
                                                         BLE_OP:   state = BLE;
                                                         BGT_OP:   state = BGT;
-                                                        SRAM_OP:  state = SRAM;
-                                                        LB_OP:    state = LB;
-                                                        LH_OP:    state = LH;
-                                                        LW_OP:    state = LW;
+                                                        SRAM_OP:  state = MEM;
+                                                        LB_OP:    state = MEM;
+                                                        LH_OP:    state = MEM;
+                                                        LW_OP:    state = MEM;
                                                         LUI_OP:   state = LUI;
-                                                        SB_OP:    state = SB;
-                                                        SH_OP:    state = SH;
-                                                        SW_OP:    state = SW;
+                                                        SB_OP:    state = MEM;
+                                                        SH_OP:    state = MEM;
+                                                        SW_OP:    state = MEM;
                                                         SLTI_OP:  state = SLTI;
                                                         //Tipo J
                                                         J_OP:     state = J;
@@ -170,6 +171,9 @@ module Controle (
                                                 endcase
                                         end
                                 end
+
+//----------------------------- Excecoes
+
                                 OPCODE_INEXISTENTE: begin
                                         if (counter < 2) begin
                                                 //PC - 4
@@ -178,7 +182,7 @@ module Controle (
                                                 ALU_op = ALU_SUB;
 
 // DUVIDA:                                      //Não entendi esses sinais, seria bom conferir
-                                                iorD = 3'b100;
+                                                iorD = 'b100;
                                                 wr = MEM_READ;
                                                 PC_src = PC_SRC_LOAD;
                                                 counter = counter + 1;
@@ -187,8 +191,12 @@ module Controle (
                                                 load_ctrl = 1;
                                                 PC_write = 1;
                                                 counter = 0;
+                                                state = FETCH;
                                         end
                                 end
+
+                                //OVERFLOW:
+                                //DIVZERO:
 
 //----------------------------- ADDs com imediato
 
@@ -251,31 +259,115 @@ module Controle (
                                                 counter = 1;
                                         end
                                         else begin
-                                                bank_write_reg = 3'b000;
-                                                bank_write_data = 3'b111;
+                                                counter = 0
+                                                bank_write_reg = 'b000;
+                                                bank_write_data = 'b111;
                                                 bank_write = 1;
+                                                state = FETCH;
+
                                         end
                                 end
+//----------------------------- Acesso a memoria
+                                MEM: begin
+                                        if(counter == 0) begin
+                                                ALU_src_A = A_SRC_A;
+                                                ALU_src_B = B_SRC_OFFSET;
+                                                ALU_op = ALU_ADD;
+                                                ALU_out_write = 1;
+                                                wr = MEM_READ;
+                                        end
+                                        else if (counter < 3) begin
+                                                iorD = ALU_ADDR;
+                                                
+                                        end
+                                        else begin
+                                                mem_reg_write = 1;
+                                                case(OP)
+                                                        LB_OP: state = LB;
+                                                        LH_OP: state = LH;
+                                                        LW_OP: state = LW;
+                                                        SRAM_OP: state = SRAM;
+                                                        SB_OP: state = SB;
+                                                        SH_OP: state = SH;
+                                                        SW_OP: state = SW;
+                                                        //LUI_OP????
+                                                endcase
+                                        end
 
-//----------------------------- Instrucoes de Load
+                                end
 
-                                //LB:
-                                //LH:
-                                //LW:
-                                //LUI:
 
-//----------------------------- Instrucoes de Store
+//----------------------------- Instrucoes de Load (Implementar ponto em comum)
 
-                                //SRAM:
-                                //SB:
-                                //SH:
-                                //SW:
+                                LB: begin
+                                        //Apos o ponto em comum
+                                        load_ctrl = BYTE;
+                                        bank_write_reg = 'b000;
+                                        bank_write_data = 'b001;
+                                        bank_write = 1;
+                                        state = FETCH;
+                                end
+                                LH: begin
+                                        //Apos o ponto em comum
+                                        load_ctrl = HALF;
+                                        bank_write_reg = 'b000;
+                                        bank_write_data = 'b001;
+                                        state = FETCH;
+                                end
+                                LW: begin
+                                        //Apos o ponto em comum
+                                        load_ctrl = WORD;
+                                        bank_write_reg = 'b000;
+                                        bank_write_data = 'b001;
+                                        state = FETCH;
+                                end
+                                //LUI: ???? LUI ta como shift na explicacao mas na ISA do mips lui eh insrtrucao de load
+                                SRAM: begin
+                                        case(counter)
+                                                0: begin
+                                                        load_ctrl = WORD;
+                                                        sh_src = SHIFT_B;
+                                                        sh_amt = SHIFT_LOAD;
+                                                        sh_ctrl = 'b001;
+                                                        counter = 1;
+                                                end
+                                                1: begin
+                                                        sh_ctrl = 'b100;
+                                                        counter = 2;
+                                                end
+                                                2: begin
+                                                        sh_ctrl = 'b000;
+                                                        bank_write_reg = 'b000;
+                                                        bank_write_data = 'b010;
+                                                        counter = 0;
+                                                        state = FETCH;
+                                                end
+                                        endcase
+                                end
+
+//----------------------------- Instrucoes de Store (Implementar ponto em comum)
+
+                                SB: begin
+                                        store_ctrl = BYTE;
+                                        wr = MEM_WRITE;
+                                        state = FETCH;
+                                end
+                                SH: begin
+                                        store_ctrl = HALF;
+                                        wr = MEM_WRITE;
+                                        state = FETCH;
+                                end
+                                SW: begin
+                                        store_ctrl = WORD;
+                                        wr = MEM_WRITE;
+                                        state = FETCH;
+                                end
 
 //----------------------------- Instrucoes do tipo j
 
                                 JAL: begin
-                                        bank_write_reg = 3'b100;
-                                        bank_write_data = 3'b110;
+                                        bank_write_reg = 'b100;
+                                        bank_write_data = 'b110;
                                         bank_write = 1;
                                         state = J;
                                 end
