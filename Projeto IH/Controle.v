@@ -53,11 +53,38 @@ module Controle (
         `include "Opcodes.vh"
         `include "Param_Muxes.vh"
 
+        reg [5:0]state;
+        reg [3:0]counter;
+
         task Compare(input [1:0]src_A, input [1:0]src_B);
                 begin 
                         ALU_src_A = src_A;
                         ALU_src_B = src_B;
                         ALU_op = ALU_CMP;
+                end
+        endtask
+        task HandleException(input [2:0]excode);
+                begin
+                        if (counter < 2) begin
+                                //PC - 4
+                                ALU_src_A = A_SRC_PC;
+                                ALU_src_B = B_SRC_4;
+                                ALU_op = ALU_SUB;
+
+                                EPC_write = 1;
+                                iorD = excode;
+                                wr = MEM_READ;
+                                mem_reg_write = 1;
+                                PC_src = PC_SRC_LOAD;
+                                counter = counter + 1;
+                        end
+                        else begin
+                                load_ctrl = BYTE;
+                                PC_write = 1;
+                                counter = 0;
+                                state = FETCH;
+                        end
+
                 end
         endtask
 
@@ -69,9 +96,6 @@ module Controle (
         signedn = 0; \
         counter = 0; \
         state = FETCH
-
-        reg [5:0]state;
-        reg [3:0]counter;
 
         //Resetando todos os registradores
         initial begin
@@ -174,29 +198,11 @@ module Controle (
 
 //----------------------------- Excecoes
 
-                                OPCODE_INEXISTENTE: begin
-                                        if (counter < 2) begin
-                                                //PC - 4
-                                                ALU_src_A = A_SRC_PC;
-                                                ALU_src_B = B_SRC_4;
-                                                ALU_op = ALU_SUB;
+                                OPCODE_INEXISTENTE: HandleException(EX_OP_INEX);
 
-// DUVIDA:                                      //Não entendi esses sinais, seria bom conferir
-                                                iorD = 'b100;
-                                                wr = MEM_READ;
-                                                PC_src = PC_SRC_LOAD;
-                                                counter = counter + 1;
-                                        end
-                                        else begin
-                                                load_ctrl = 1;
-                                                PC_write = 1;
-                                                counter = 0;
-                                                state = FETCH;
-                                        end
-                                end
+                                OVERFLOW: HandleException(EX_OVERFLOW);
 
-                                //OVERFLOW:
-                                //DIVZERO:
+                                DIVZERO: HandleException(EX_DIVZERO);
 
 //----------------------------- ADDs com imediato
 
@@ -259,12 +265,11 @@ module Controle (
                                                 counter = 1;
                                         end
                                         else begin
-                                                counter = 0
+                                                counter = 0;
                                                 bank_write_reg = 'b000;
                                                 bank_write_data = 'b111;
                                                 bank_write = 1;
                                                 state = FETCH;
-
                                         end
                                 end
 //----------------------------- Acesso a memoria
