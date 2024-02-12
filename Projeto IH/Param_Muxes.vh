@@ -33,7 +33,12 @@ localparam  SHIFT_A         = 0,
 localparam  MEM_READ    = 0,
             MEM_WRITE   = 1,
             PC_ADDR     = 0,
-            ALU_ADDR    = 1;
-            BYTE        = 1;
-            HALF        = 2;
+            ALU_ADDR    = 1,
+            BYTE        = 1,
+            HALF        = 2,
             WORD        = 3;
+
+//Codigos de excecao
+localparam  EX_OP_INEX  = 'b100,
+            EX_OVERFLOW = 'b011,
+            EX_DIVZERO  = 'b010;
