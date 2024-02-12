@@ -215,6 +215,7 @@ module Controle (
                                         bank_write_reg = 1;
                                         bank_write_data = 0;
                                         bank_write = 1;
+                                        state = FETCH;
                                 end
 
 //----------------------------- Branches
@@ -239,6 +240,7 @@ module Controle (
                                 BRANCH_WRITE: begin
                                         PC_src = PC_SRC_ALU_OUT;
                                         PC_write = 1;
+                                        state = FETCH;
                                 end
 
 //----------------------------- Set Less Than Immediate
@@ -249,8 +251,8 @@ module Controle (
                                                 counter = 1;
                                         end
                                         else begin
-                                                bank_write_reg = 0;
-                                                bank_write_data = 7;
+                                                bank_write_reg = 3'b000;
+                                                bank_write_data = 3'b111;
                                                 bank_write = 1;
                                         end
                                 end
@@ -268,7 +270,21 @@ module Controle (
                                 //SB:
                                 //SH:
                                 //SW:
-                                
+
+//----------------------------- Instrucoes do tipo j
+
+                                JAL: begin
+                                        bank_write_reg = 3'b100;
+                                        bank_write_data = 3'b110;
+                                        bank_write = 1;
+                                        state = J;
+                                end
+                                J: begin
+                                        bank_write = 0;
+                                        PC_src = PC_SRC_OFFSET;
+                                        PC_write = 1;
+                                        state = FETCH;
+                                end
                         endcase
                 end
         end
