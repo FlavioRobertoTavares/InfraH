@@ -90,9 +90,9 @@ module Controle (
 
         // Macro para zerar todos os regitradores de saída. Pode ser substituido por uma Task futuramente
         `define RESET \
-        {wr, ir_write, PC_write, bank_write, load_ctrl, store_ctrl, EPC_write, A_write, B_write, ALU_out_write, Lo_write, Hi_write, mem_reg_write} = {1'b0}; \
-        {PC_src, ALU_src_A, ALU_src_B, sh_src, sh_amt, bank_write_reg} = {2'b00}; \
-        {ALU_op, bank_write_data, iorD, sh_ctrl} = {3'b000}; \
+        {wr, ir_write, PC_write, load_ctrl, store_ctrl, EPC_write, A_write, B_write, ALU_out_write, Lo_write, Hi_write, mem_reg_write} = {1'b0}; \
+        {PC_src, ALU_src_A, ALU_src_B, sh_src, sh_amt} = {2'b00}; \
+        {ALU_op, iorD, sh_ctrl} = {3'b000}; \
         signedn = 0; \
         counter = 0; \
         state = FETCH
@@ -100,19 +100,26 @@ module Controle (
         //Resetando todos os registradores
         initial begin
                 `RESET;
+                bank_write = 1'b0;
+                bank_write_data = 3'b000;
+                bank_write_reg = 3'b000;
         end
 
         always @(posedge clk) begin
                 if (reset == 1) begin
                         `RESET;
+                        bank_write = 1'b1;
+                        bank_write_data = 3'b101;
+                        bank_write_reg = 3'b011;
                         state = FETCH;
                         counter = 0;
+
                 end
                 else begin
                         case(state)
 
                                 FETCH: begin
-                                        if(counter < 4) begin
+                                        if(counter < 3) begin
                                                 //Ler instrucao
                                                 wr = MEM_READ;
                                                 iorD = PC_ADDR;
@@ -203,6 +210,96 @@ module Controle (
                                 OVERFLOW: HandleException(EX_OVERFLOW);
 
                                 DIVZERO: HandleException(EX_DIVZERO);
+
+//----------------------------- Aritmeticas e Logicas
+
+                                ADD: begin
+                                        if(counter == 0)begin
+                                                ALU_src_A = 2'b10;
+                                                ALU_src_B = 2'b00;
+                                                ALU_op = 3'b001;
+                                                ALU_out_write = 1'b1;
+                                                counter = counter + 1;
+                                        end
+                                        else if(overflow == 1) begin
+                                                state = OVERFLOW;
+                                                counter = 0;
+                                        end
+                                        else if(counter == 2) begin
+                                                bank_write_reg = 3'b001;
+                                                bank_write_data = 3'b000;
+                                                bank_write = 1'b1;
+                                                counter = 0;
+                                                state = FETCH;
+                                        end
+                                end
+                                SUB: begin
+                                        if(counter == 0)begin
+                                                ALU_src_A = 2'b10;
+                                                ALU_src_B = 2'b00;
+                                                ALU_op = 3'b010;
+                                                ALU_out_write = 1'b1;
+                                                counter = counter + 1;
+                                        end
+                                        else if(overflow == 1) begin
+                                                state = OVERFLOW;
+                                                counter = 0;
+                                        end
+                                        else if(counter == 1) begin
+                                                bank_write_reg = 3'b001;
+                                                bank_write_data = 3'b000;
+                                                bank_write = 1'b1;
+                                                counter = 0;
+                                                state = FETCH;
+                                        end
+                                end
+                                AND: begin
+                                        if(counter == 0)begin
+                                                ALU_src_A = 2'b10;
+                                                ALU_src_B = 2'b00;
+                                                ALU_op = 3'b011;
+                                                ALU_out_write = 1'b1;
+                                                counter = counter + 1;
+                                        end
+                                        else if(counter == 1) begin
+                                                bank_write_reg = 3'b001;
+                                                bank_write_data = 3'b000;
+                                                bank_write = 1'b1;
+                                                counter = 0;
+                                                state = FETCH;
+                                        end
+                                end
+                                MULT: begin 
+                                        if(counter <= 31) begin
+                                                div_mult_ctrl = 2'b01;
+                                                counter = counter + 1;
+                                        end
+                                        else if(counter == 32) begin
+                                                Hi_write = 1'b1;
+                                                Lo_write = 1'b1;
+                                                div_mult_ctrl = 2'b00;
+                                                counter = 0;
+                                                state = FETCH;
+                                        end
+
+                                end
+                                DIV: begin
+                                        if(counter <= 31) begin
+                                                div_mult_ctrl = 2'b10;
+                                                counter = counter + 1;
+                                        end
+                                        else if(div_zero == 1) begin
+                                                state = DIVZERO;
+                                                counter = 0;
+                                        end
+                                        else if(counter == 32) begin
+                                                Hi_write = 1'b1;
+                                                Lo_write = 1'b1;
+                                                div_mult_ctrl = 2'b00;
+                                                counter = 0;
+                                                state = FETCH;
+                                        end
+                                end
 
 //----------------------------- ADDs com imediato
 
