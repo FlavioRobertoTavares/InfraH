@@ -39,5 +39,7 @@ localparam
         JAL                     = 37,
         RTE                     = 38,
         XCHG                    = 39,
-        ADDI                    = 40
+        ADDI                    = 40,
+        ADDI_WRITE              = 41,
+        BRANCH_WRITE            = 42
         ;
