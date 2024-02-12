@@ -225,7 +225,7 @@ module Controle (
                                                 state = OVERFLOW;
                                                 counter = 0;
                                         end
-                                        else if(counter == 2) begin
+                                        else if(counter == 1) begin
                                                 bank_write_reg = 3'b001;
                                                 bank_write_data = 3'b000;
                                                 bank_write = 1'b1;
@@ -435,6 +435,7 @@ module Controle (
                                                 state = FETCH;
                                         end
                                 end
+
 //----------------------------- ADDs com imediato
 
                                 ADDI: begin
