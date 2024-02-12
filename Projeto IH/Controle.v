@@ -9,7 +9,7 @@ module Controle (
                 wire div_zero,                  //Division by zero flag
                 wire overflow,                  //Overflow flag
                 wire GT,                        //Greater than flag
-                wire EG,                        //
+                wire EG,                        //Equal flag
                 wire LT,                        //Less than flag
 
         //Entradas de Intrucoes
@@ -51,6 +51,14 @@ module Controle (
 );
         `include "Estados.vh"
         `include "Opcodes.vh"
+
+        task Compare(input [1:0]src_A, input [1:0]src_B);
+                begin 
+                        ALU_src_A = src_A;
+                        ALU_src_B = src_B;
+                        ALU_op = ALU_CMP;
+                end
+        endtask
 
         // Macro para zerar todos os regitradores de saída. Pode ser substituido por uma Task futuramente
         `define RESET \
@@ -100,9 +108,21 @@ module Controle (
                                         end
                                 end
                                 DECODE: begin
-                                        ir_write = 0;
-                                        PC_write = 0;
-                                        if(counter == 0) counter = 1;
+                                        
+                                        if(counter == 0) begin
+                                                //Zerando sinais de escrita do estado anterior
+                                                ir_write = 0;
+                                                PC_write = 0;
+                                                //Calculo adiantado do Branch
+                                                ALU_src_A = A_SRC_PC;
+// DUVIDA                                       Source B não deveria ser imediato?
+                                                ALU_src_B = B_SRC_ADDR;
+                                                ALU_op = ALU_ADD;
+                                                ALU_out_write = 1;
+                                                A_write = 1;
+                                                B_write = 1;
+                                                counter = 1;
+                                        end
                                         else begin
                                                 counter = 0;
                                                 case(OP)
@@ -136,10 +156,11 @@ module Controle (
                                                         SRAM_OP:  state = SRAM;
                                                         LB_OP:    state = LB;
                                                         LH_OP:    state = LH;
-                                                        LUI_OP:   state = LUI;
                                                         LW_OP:    state = LW;
+                                                        LUI_OP:   state = LUI;
                                                         SB_OP:    state = SB;
                                                         SH_OP:    state = SH;
+                                                        SW_OP:    state = SW;
                                                         SLTI_OP:  state = SLTI;
                                                         //Tipo J
                                                         J_OP:     state = J;
@@ -156,7 +177,7 @@ module Controle (
                                                 ALU_src_B = B_SRC_4;
                                                 ALU_op = ALU_SUB;
 
-                                                //Não entendi esses sinais, seria bom conferir
+// DUVIDA:                                      //Não entendi esses sinais, seria bom conferir
                                                 iorD = 3'b100;
                                                 wr = MEM_READ;
                                                 PC_src = PC_SRC_LOAD;
@@ -168,6 +189,85 @@ module Controle (
                                                 counter = 0;
                                         end
                                 end
+
+//----------------------------- ADDs com imediato
+
+                                ADDI: begin
+                                        signedn = 1;
+                                        ALU_src_A = A_SRC_A;
+                                        ALU_src_B = B_SRC_IMMEDIATE;
+                                        ALU_op = ALU_ADD;
+                                        ALU_out_write = 1;
+// DUVIDA:                              Pode checar overflow no mesmo ciclo?
+                                        state = (overflow)? OVERFLOW : ADDI_WRITE;
+                                end
+                                ADDIU: begin
+                                        signedn = 1;
+                                        ALU_src_A = A_SRC_A;
+                                        ALU_src_B = B_SRC_IMMEDIATE;
+                                        ALU_op = ALU_ADD;
+                                        ALU_out_write = 1;
+                                        state = ADDI_WRITE;
+
+                                end
+                                ADDI_WRITE: begin
+                                        ALU_out_write = 0;
+                                        bank_write_reg = 1;
+                                        bank_write_data = 0;
+                                        bank_write = 1;
+                                end
+
+//----------------------------- Branches
+
+                                BEQ: begin
+                                        Compare(A_SRC_A, B_SRC_B);
+// DUVIDA                               //Pode checar flags de cmp no mesmo ciclo?
+                                        state = (EG)? BRANCH_WRITE : FETCH;
+                                end
+                                BNE: begin
+                                        Compare(A_SRC_A, B_SRC_B);
+                                        state = (EG)? FETCH : BRANCH_WRITE;
+                                end
+                                BLE: begin
+                                        Compare(A_SRC_A, B_SRC_B);
+                                        state = (GT)? FETCH : BRANCH_WRITE;
+                                end
+                                BGT: begin
+                                        Compare(A_SRC_A, B_SRC_B);
+                                        state = (GT)? BRANCH_WRITE: FETCH;
+                                end
+                                BRANCH_WRITE: begin
+                                        PC_src = PC_SRC_ALU_OUT;
+                                        PC_write = 1;
+                                end
+
+//----------------------------- Set Less Than Immediate
+
+                                SLTI: begin
+                                        if (counter == 0) begin
+                                                Compare(A_SRC_A, B_SRC_IMMEDIATE);
+                                                counter = 1;
+                                        end
+                                        else begin
+                                                bank_write_reg = 0;
+                                                bank_write_data = 7;
+                                                bank_write = 1;
+                                        end
+                                end
+
+//----------------------------- Instrucoes de Load
+
+                                //LB:
+                                //LH:
+                                //LW:
+                                //LUI:
+
+//----------------------------- Instrucoes de Store
+
+                                //SRAM:
+                                //SB:
+                                //SH:
+                                //SW:
                                 
                         endcase
                 end
