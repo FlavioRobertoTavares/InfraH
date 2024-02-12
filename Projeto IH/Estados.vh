@@ -41,5 +41,6 @@ localparam
         XCHG                    = 39,
         ADDI                    = 40,
         ADDI_WRITE              = 41,
-        BRANCH_WRITE            = 42
+        BRANCH_WRITE            = 42,
+        MEM                     = 43
         ;
