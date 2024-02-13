@@ -28,6 +28,7 @@ localparam  SHIFT_A         = 0,
             SHAMT           = 0,
             SHIFT_B         = 1,
             SHIFT_IMMEDIATE = 2,
+            SHIFT_16        = 2,
             SHIFT_LOAD      = 3;
 //Memoria
 localparam  MEM_READ    = 0,
