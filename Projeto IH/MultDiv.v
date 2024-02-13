@@ -11,35 +11,30 @@ module MultDiv (
 
     initial begin
         
-        if (DivMultControl == 1) begin
-            //Config inicial para mult
-            Q = A;
-            q = 0;
-            Arm = 0; 
+        //Config inicial para mult
+        Q = A;
+        q = 0;
+        Arm = 0; 
+ 
+        //Config inicial para div
+        quo = 0;
+        if (A[31] == 1) begin
+            div[63:32] = ~A + 1; //Ver se precisa por isso dentro do bloco de ação
         end
 
-        else if (DivMultControl == 2) begin
-            //Config inicial para div
-            if (A[31] == 1) begin
-                div[63:32] = ~A + 1;
-            end
-
-            else begin
-                div[63:32] = A;
-            end
-
-            if (B[31] == 1) begin
-                resto[31:0] = ~B + 1;
-            end
-
-            else begin
-                resto[31:0] = B;
-            end
-
-            quo = 0;
-
+        else begin
+            div[63:32] = A;
         end
 
+        if (B[31] == 1) begin
+            resto[31:0] = ~B + 1; //Ver se precisa por isso dentro do bloco de ação
+        end
+
+        else begin
+            resto[31:0] = B;
+        end
+
+        //Comum      
         i = 0;
         Hi = 0;
         Lo = 0;
