@@ -1,5 +1,5 @@
 module MultDiv (
-    input wire [31:0] A, B, input wire [1:0] DivMultControl, input wire clk, reset, output reg [31:0] Hi, Lo, output wire DivZero);
+    input wire [31:0] A, B, input wire [1:0] DivMultControl, input wire clk, reset, output reg [31:0] Hi, Lo, output reg DivZero);
     
     reg [5:0] i;
     //para multiplicação
