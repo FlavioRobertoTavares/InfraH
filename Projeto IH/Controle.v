@@ -237,7 +237,7 @@ module Controle (
                                                 state = OVERFLOW;
                                                 counter = 0;
                                         end
-                                        else if(counter == 2) begin
+                                        else if(counter == 1) begin
                                                 bank_write_reg = 3'b001;
                                                 bank_write_data = 3'b000;
                                                 bank_write = 1'b1;
@@ -308,6 +308,141 @@ module Controle (
                                                 Hi_write = 1'b1;
                                                 Lo_write = 1'b1;
                                                 div_mult_ctrl = 2'b00;
+                                                counter = 0;
+                                                state = FETCH;
+                                        end
+                                end
+                                
+//-----------------------------Desvio incondicional
+
+                                JR: begin
+                                        if (counter == 0) begin 
+                                                ALU_src_A = 2'b10;
+                                                ALU_op = 3'b000;
+                                                ALU_out_write = 1'b1;
+                                                counter = counter + 1;
+                                        end
+                                        else if(counter == 1) begin
+                                                PC_src = 2'b00;
+                                                PC_write = 1'b1;
+                                                counter = 0;
+                                                state = FETCH;
+                                        end
+                                end
+
+//----------------------------- Escrever na memória
+                                
+                                MFHI: begin 
+                                        bank_write_reg = 3'b001;
+                                        bank_write_data = 3'b011;
+                                        bank_write = 1'b1;
+                                        state = FETCH;
+                                end
+                                MFLO: begin 
+                                        bank_write_reg = 3'b001;
+                                        bank_write_data = 3'b100;
+                                        bank_write = 1'b1;
+                                        state = FETCH;
+                                end
+
+//----------------------------- Instruções de deslocamento
+
+                                SLL: begin 
+                                        if(counter == 0) begin
+                                                sh_src = 2'b01;
+                                                sh_amt = 2'b00;
+                                                sh_ctrl = 3'b001';
+                                                counter = counter + 1;
+                                        end
+                                        else if (counter == 1)begin 
+                                                sh_ctrl = 3'b010;
+                                                counter = counter + 1;
+                                        end
+                                        else if(counter == 2) begin
+                                                sh_ctrl = 3'b000;
+                                                bank_write_reg = 3'b001;
+                                                bank_write_data = 3'b010;
+                                                bank_write = 1'b1;
+                                                counter = 0;
+                                                state = FETCH;
+                                        end
+                                end
+                                SLLV: begin 
+                                        if(counter == 0) begin
+                                                sh_src = 2'b00;
+                                                sh_amt = 2'b01;
+                                                sh_ctrl = 3'b001';
+                                                counter = counter + 1;
+                                        end
+                                        else if (counter == 1)begin 
+                                                sh_ctrl = 3'b010;
+                                                counter = counter + 1;
+                                        end
+                                        else if(counter == 2) begin
+                                                sh_ctrl = 3'b000;
+                                                bank_write_reg = 3'b001;
+                                                bank_write_data = 3'b010;
+                                                bank_write = 1'b1;
+                                                counter = 0;
+                                                state = FETCH;
+                                        end
+                                end
+                                SRA: begin
+                                        if(counter == 0) begin
+                                                sh_src = 2'b01;
+                                                sh_amt = 2'b00;
+                                                sh_ctrl = 3'b001';
+                                                counter = counter + 1;
+                                        end
+                                        else if (counter == 1)begin 
+                                                sh_ctrl = 3'b100;
+                                                counter = counter + 1;
+                                        end
+                                        else if(counter == 2) begin
+                                                sh_ctrl = 3'b000;
+                                                bank_write_reg = 3'b001;
+                                                bank_write_data = 3'b010;
+                                                bank_write = 1'b1;
+                                                counter = 0;
+                                                state = FETCH;
+                                        end
+                                end
+                                SRAV: begin 
+                                        if(counter == 0) begin
+                                                sh_src = 2'b00;
+                                                sh_amt = 2'b01;
+                                                sh_ctrl = 3'b001';
+                                                counter = counter + 1;
+                                        end
+                                        else if (counter == 1)begin 
+                                                sh_ctrl = 3'b100;
+                                                counter = counter + 1;
+                                        end
+                                        else if(counter == 2) begin
+                                                sh_ctrl = 3'b000;
+                                                bank_write_reg = 3'b001;
+                                                bank_write_data = 3'b010;
+                                                bank_write = 1'b1;
+                                                counter = 0;
+                                                state = FETCH;
+                                        end
+                                end
+                                SRL: begin
+                                        if(counter == 0) begin
+                                                sh_src = 2'b01;
+                                                sh_amt = 2'b00;
+                                                sh_ctrl = 3'b001';
+                                                counter = counter + 1;
+                                        end
+                                        else if (counter == 1)begin 
+                                                sh_ctrl = 3'b011;
+                                                counter = counter + 1;
+                                        end
+                                        else if(counter == 2) begin
+                                                sh_ctrl = 3'b000;
+                                                bank_write_reg = 3'b001;
+                                                bank_write_data = 3'b010;
+                                                bank_write = 1'b1;
                                                 counter = 0;
                                                 state = FETCH;
                                         end
