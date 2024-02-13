@@ -63,6 +63,18 @@ module Controle (
                         ALU_op = ALU_CMP;
                 end
         endtask
+        task Store(input [1:0]size);
+                store_ctrl = size;
+                wr = MEM_WRITE;
+                state = FETCH;
+        endtask
+        task Load(input [1:0]size);
+                load_ctrl = size;
+                bank_write_reg = 'b000;
+                bank_write_data = 'b001;
+                bank_write = 1;
+                state = FETCH;
+        endtask
         task HandleException(input [2:0]excode);
                 begin
                         if (counter < 2) begin
@@ -369,7 +381,9 @@ module Controle (
                                                 state = FETCH;
                                         end
                                 end
+
 //----------------------------- Acesso a memoria
+
                                 MEM: begin
                                         if(counter == 0) begin
                                                 ALU_src_A = A_SRC_A;
@@ -399,30 +413,14 @@ module Controle (
                                 end
 
 
-//----------------------------- Instrucoes de Load (Implementar ponto em comum)
+//----------------------------- Instrucoes de Load
 
-                                LB: begin
-                                        //Apos o ponto em comum
-                                        load_ctrl = BYTE;
-                                        bank_write_reg = 'b000;
-                                        bank_write_data = 'b001;
-                                        bank_write = 1;
-                                        state = FETCH;
-                                end
-                                LH: begin
-                                        //Apos o ponto em comum
-                                        load_ctrl = HALF;
-                                        bank_write_reg = 'b000;
-                                        bank_write_data = 'b001;
-                                        state = FETCH;
-                                end
-                                LW: begin
-                                        //Apos o ponto em comum
-                                        load_ctrl = WORD;
-                                        bank_write_reg = 'b000;
-                                        bank_write_data = 'b001;
-                                        state = FETCH;
-                                end
+                                LB: Load(BYTE);
+
+                                LH: Load(HALF);
+
+                                LW: Load(WORD);
+                                
                                 //LUI: ???? LUI ta como shift na explicacao mas na ISA do mips lui eh insrtrucao de load
                                 SRAM: begin
                                         case(counter)
@@ -447,23 +445,13 @@ module Controle (
                                         endcase
                                 end
 
-//----------------------------- Instrucoes de Store (Implementar ponto em comum)
+//----------------------------- Instrucoes de Store
 
-                                SB: begin
-                                        store_ctrl = BYTE;
-                                        wr = MEM_WRITE;
-                                        state = FETCH;
-                                end
-                                SH: begin
-                                        store_ctrl = HALF;
-                                        wr = MEM_WRITE;
-                                        state = FETCH;
-                                end
-                                SW: begin
-                                        store_ctrl = WORD;
-                                        wr = MEM_WRITE;
-                                        state = FETCH;
-                                end
+                                SB: Store(BYTE);
+                                
+                                SH: Store(HALF);
+
+                                SW: Store(WORD);
 
 //----------------------------- Instrucoes do tipo j
 
@@ -479,6 +467,11 @@ module Controle (
                                         PC_write = 1;
                                         state = FETCH;
                                 end
+
+//----------------------------- Break
+
+                                BREAK: state = BREAK;
+
                         endcase
                 end
         end
