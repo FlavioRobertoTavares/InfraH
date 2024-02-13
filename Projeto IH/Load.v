@@ -3,11 +3,11 @@ module Load (
     
     always @(posedge LoadControl) begin
         if (LoadControl == 1) begin
-            saida = {2'b000000000000000000000000, RegMemo[7:0]}; 
+            saida = {24'b0, RegMemo[7:0]}; 
         end
 
         else if (LoadControl == 2) begin
-            saida = {2'b0000000000000000 , RegMemo[15:0]}; 
+            saida = {16'b0 , RegMemo[15:0]}; 
         end
 
         else if (LoadControl == 3) begin
