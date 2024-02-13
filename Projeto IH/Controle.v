@@ -137,9 +137,6 @@ module Controle (
                         bank_write = 1'b1;
                         bank_write_data = 3'b101;
                         bank_write_reg = 3'b011;
-                        state = FETCH;
-                        counter = 0;
-
                 end
                 else begin
                         case(state)
@@ -311,7 +308,7 @@ module Controle (
 
                                 end
                                 DIV: begin
-                                        if(counter <= 31) begin
+                                        if(counter <= 32) begin
                                                 div_mult_ctrl = 2'b10;
                                                 counter = counter + 1;
                                         end
@@ -319,7 +316,7 @@ module Controle (
                                                 state = DIVZERO;
                                                 counter = 0;
                                         end
-                                        else if(counter == 32) begin
+                                        else if(counter == 33) begin
                                                 Hi_write = 1'b1;
                                                 Lo_write = 1'b1;
                                                 div_mult_ctrl = 2'b00;
