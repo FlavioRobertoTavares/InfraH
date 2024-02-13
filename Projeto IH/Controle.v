@@ -575,12 +575,15 @@ module Controle (
                                                 ALU_op = ALU_ADD;
                                                 ALU_out_write = 1;
                                                 wr = MEM_READ;
+                                                counter = counter + 1;
                                         end
                                         else if (counter < 3) begin
                                                 iorD = ALU_ADDR;
+                                                counter = counter + 1;
                                                 
                                         end
                                         else begin
+                                                counter = 0;
                                                 mem_reg_write = 1;
                                                 case(OP)
                                                         LB_OP: state = LB;
