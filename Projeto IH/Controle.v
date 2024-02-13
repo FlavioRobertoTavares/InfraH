@@ -108,6 +108,20 @@ module Controle (
         signedn = 0; \
         counter = 0; \
         state = FETCH
+        
+        //Zera todos os sinais de escrita
+        `define RESET_WRITE \
+        bank_write = 0;\
+        Hi_write = 0;\
+        Lo_write = 0;\
+        ALU_out_write = 0;\
+        PC_write = 0;\
+        A_write = 0;\
+        B_write = 0;\
+        EPC_write = 0;\
+        wr = MEM_READ;\
+        mem_reg_write = 0;\
+        ir_write = 0
 
         //Resetando todos os registradores
         initial begin
@@ -133,8 +147,8 @@ module Controle (
                                 FETCH: begin
                                         if(counter < 3) begin
                                                 //Ler instrucao
-                                                wr = MEM_READ;
                                                 iorD = PC_ADDR;
+                                                `RESET_WRITE;
 
                                                 //PC = PC + 4
                                                 ALU_src_A = A_SRC_PC;
@@ -187,6 +201,7 @@ module Controle (
                                                                         SRL_FUNCT:   state = SRL;
                                                                         SUB_FUNCT:   state = SUB;
                                                                         BREAK_FUNCT: state = BREAK;
+                                                                        XCHG_FUNCT:  state = XCHG;
                                                                         default:     state = OPCODE_INEXISTENTE;
                                                                 endcase
                                                         end
@@ -448,6 +463,43 @@ module Controle (
                                         end
                                 end
 
+//----------------------------- Break
+
+                                BREAK: state = BREAK;
+
+//----------------------------- Exchange
+
+                                XCHG: begin
+                                        case(counter)
+                                                0: begin
+                                                        ALU_src_A = A_SRC_A;
+                                                        ALU_op = 0;
+                                                        ALU_out_write = 1;
+                                                        counter = 1;
+                                                end
+                                                1: begin
+                                                        bank_write_reg = 'b000;
+                                                        bank_write_data = 'b000;
+                                                        bank_write = 1;
+                                                        counter = 2;
+                                                end
+                                                2: begin
+                                                        ALU_src_A = A_SRC_B;
+                                                        ALU_op = 0;
+                                                        ALU_out_write = 1;
+                                                        counter = 3;
+                                                end
+                                                3: begin
+                                                        bank_write_reg = 'b010;
+                                                        bank_write_data = 'b000;
+                                                        bank_write = 1;
+                                                        counter = 0;
+                                                        state = FETCH;
+                                                end
+                                        endcase
+
+                                end
+
 //----------------------------- ADDs com imediato
 
                                 ADDI: begin
@@ -547,6 +599,30 @@ module Controle (
 
                                 end
 
+//----------------------------- LUI
+
+                                LUI: begin
+                                        case(counter)
+                                                0: begin
+                                                        sh_src = SHIFT_IMMEDIATE;
+                                                        sh_amt = SHIFT_16;
+                                                        sh_ctrl = 'b001;
+                                                        counter = 1;
+                                                end
+                                                1: begin
+                                                        sh_ctrl = 'b010;
+                                                        counter = 2;
+                                                end
+                                                2: begin
+                                                        sh_ctrl = 'b000;
+                                                        bank_write_reg = 'b000;
+                                                        bank_write_data = 'b010;
+                                                        bank_write = 1;
+                                                        counter = 0;
+                                                        state = FETCH;
+                                                end
+                                        endcase
+                                end
 
 //----------------------------- Instrucoes de Load
 
@@ -555,8 +631,7 @@ module Controle (
                                 LH: Load(HALF);
 
                                 LW: Load(WORD);
-                                
-                                //LUI: ???? LUI ta como shift na explicacao mas na ISA do mips lui eh insrtrucao de load
+
                                 SRAM: begin
                                         case(counter)
                                                 0: begin
@@ -602,10 +677,6 @@ module Controle (
                                         PC_write = 1;
                                         state = FETCH;
                                 end
-
-//----------------------------- Break
-
-                                BREAK: state = BREAK;
 
                         endcase
                 end
