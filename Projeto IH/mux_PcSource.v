@@ -5,6 +5,6 @@ module mux_PcSource (
                     (PcSource == 1)? Offset :
                     (PcSource == 2)? Load_except :
                     (PcSource == 3)? EPC :
-                    x; 
+                    32'hxxxxxxxx; 
 
 endmodule

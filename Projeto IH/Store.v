@@ -15,7 +15,7 @@ module Store (
         end
 
         else begin
-            saida = x; 
+            saida = 32'hxxxxxxxx; 
         end
         
     end

@@ -4,6 +4,6 @@ module mux_DeslocSrc (
     assign DeslocMux = (DeslocSrc == 0)? RegA :
                        (DeslocSrc == 1)? RegB :
                        (DeslocSrc == 2)? Immediate :
-                       x; 
+                       32'hxxxxxxxx; 
 
 endmodule

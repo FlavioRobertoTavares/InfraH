@@ -5,6 +5,6 @@ module mux_DeslocAmount (
                 (DeslocAmount == 1)? RegB :
                 (DeslocAmount == 2)? 16 : //Imeddiate
                 (DeslocAmount == 3)? Load :
-                x; 
+                32'hxxxxxxxx; 
 
 endmodule

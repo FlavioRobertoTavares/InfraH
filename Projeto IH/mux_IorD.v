@@ -6,6 +6,6 @@ module mux_IorD (
                      (IorD == 2)? 255 : // Div0
                      (IorD == 3)? 254 : // Overflow
                      (IorD == 4)? 253 : // OpInex
-                     x; 
+                     32'hxxxxxxxx; 
 
 endmodule

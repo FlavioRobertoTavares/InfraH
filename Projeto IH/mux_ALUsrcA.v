@@ -4,6 +4,6 @@ module mux_ALUsrcA (
     assign A =  (ALUsrcA == 0)? PC :
                 (ALUsrcA == 1)? RegB :
                 (ALUsrcA == 2)? RegA :
-                x; 
+                32'hxxxxxxxx; 
 
 endmodule

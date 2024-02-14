@@ -63,7 +63,7 @@ module MultDiv (
         else if (DivMultControl == 1) begin
             //multiplica
             
-            if (Q[0] == 0 && q = 1) begin
+            if (Q[0] == 0 && q == 1) begin
                 Arm = Arm + B; 
             end
 

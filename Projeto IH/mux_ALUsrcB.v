@@ -5,6 +5,6 @@ module mux_ALUsrcB (
                 (ALUsrcB == 1)? 4 : // Quatro
                 (ALUsrcB == 2)? Addres :
                 (ALUsrcB == 3)? Off_immedi :
-                x; 
+                32'hxxxxxxxx; 
 
 endmodule

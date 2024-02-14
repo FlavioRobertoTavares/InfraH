@@ -1,5 +1,5 @@
 module mux_BancoWriteData (
-    input wire [31:0] AluOut, Load, RegDeslocamento, Hi, Lo, PC, LT input wire [2:0] BancoWriteData, output wire [31:0] WriteData);
+    input wire [31:0] AluOut, Load, RegDeslocamento, Hi, Lo, PC, LT, input wire [2:0] BancoWriteData, output wire [31:0] WriteData);
     
     assign WriteData = (BancoWriteData == 0)? AluOut :
                        (BancoWriteData == 1)? Load :
@@ -9,6 +9,6 @@ module mux_BancoWriteData (
                        (BancoWriteData == 5)? 227 : // Começo da pilha
                        (BancoWriteData == 6)? PC :
                        (BancoWriteData == 7)? LT : //ver se é 1 bit
-                       x; 
+                       32'hxxxxxxxx; 
 
 endmodule
