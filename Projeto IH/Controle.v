@@ -77,7 +77,7 @@ module Controle (
         endtask
         task HandleException(input [2:0]excode);
                 begin
-                        if (counter < 2) begin
+                        if (counter < 3) begin
                                 //PC - 4
                                 ALU_src_A = A_SRC_PC;
                                 ALU_src_B = B_SRC_4;
