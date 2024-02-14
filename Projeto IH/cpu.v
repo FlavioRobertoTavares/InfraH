@@ -59,13 +59,13 @@ module cpu(
         wire [5:0]  OP;
         wire [5:0]  Funct;
 //-----MUXs
+        wire [4:0] rt;
+        wire [4:0] rd;
+        wire [4:0] rs;
         wire [31:0] offset_resultado;
         wire [31:0] Load_except;
-        wire [31:0] rt;
-        wire [31:0] rd;
-        wire [31:0] rs;
         wire [5:0]  Shamt;
-        wire [31:0] write_reg;
+        wire [4:0] write_reg;
         wire [4:0]  N;
         wire [31:0] Desloc_mux;
         wire [31:0] Reg_desloc_out;
