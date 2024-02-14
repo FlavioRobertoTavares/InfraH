@@ -180,6 +180,7 @@ module Controle (
                                         end
                                         else begin
                                                 counter = 0;
+                                                `RESET_WRITE;
                                                 case(OP)
                                                         TYPE_R_OP: begin
                                                                 case(funct)
