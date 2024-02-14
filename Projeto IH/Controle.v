@@ -130,9 +130,9 @@ module Controle (
         //Resetando todos os registradores
         initial begin
                 `RESET;
-                bank_write = 1'b0;
-                bank_write_data = 3'b000;
-                bank_write_reg = 3'b000;
+                bank_write = 1'b1;
+                bank_write_data = 3'b101;
+                bank_write_reg = 3'b011;
         end
 
         always @(posedge clk) begin
