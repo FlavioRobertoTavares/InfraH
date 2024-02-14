@@ -4,6 +4,7 @@ module cpu(
 //----- Control wires
         wire EPC_write;
         wire MEM_write;
+        wire negativo;
         wire Store_ctrl;
         wire Load_ctrl;
         reg DivZero;
@@ -39,6 +40,7 @@ module cpu(
 
 //-----Data wires
         wire [31:0] result; 
+        wire [25:0] offset;
         wire [31:0] EPC_out;
         wire [31:0] MEM_in; 
         wire [31:0] MEM_out;
@@ -57,7 +59,7 @@ module cpu(
         wire [5:0] OP;
         wire [3:0] Funct;
 //-----MUXs
-        wire[31:0] Offset;
+        wire[31:0] offset_resultado;
         wire[31:0] Load_except;
         wire[31:0] rt;
         wire[31:0] rd;
@@ -78,6 +80,7 @@ module cpu(
         wire[31:0] Address;
 //-----Store
         wire[31:0] write;
+//------Unidade de controle
 
         Controle unidade_controle(
                 reset,
@@ -117,6 +120,20 @@ module cpu(
                 mem_reg_write
 
         );
+//------ULA
+        ula32 ULA(
+                A,
+                B,
+                ALU_op,
+                result,
+                overflow,
+                negativo,
+                zero,
+                EG,
+                GT,
+                LT
+        );
+//------Registradores
         Registrador EPC(
                 clk,
                 reset,
@@ -181,6 +198,14 @@ module cpu(
                 Desloc_mux,
                 Reg_desloc_out
         );
+//------Estruturas relacionadas a memoria e armazenamento
+        Memoria memoria(
+                Mux_Memo,
+                clk,
+                wr,
+                write,
+                PC_out
+        );
         Load load(
                 Load_ctrl,
                 MEM_out,
@@ -204,9 +229,10 @@ module cpu(
                 B_in
 
         );
+//------MUXES
         mux_PcSource MUX_1(
                 ALUout_out,
-                Offset, 
+                offset_resultado, 
                 Load_except, 
                 EPC_out, 
                 PcSource,
@@ -243,7 +269,7 @@ module cpu(
                 ALU_src_A,
                 A
         );
-        muxALUsrcB MUX_6(
+        mux_ALUsrcB MUX_6(
                 B_out,
                 Addres,
                 immediate_resultado,
@@ -265,6 +291,8 @@ module cpu(
                 Desloc_Amount,
                 N
         );
+
+//------Divisor e multiplicador
         MultDiv Mult_Div(
                 A_out,
                 B_out,
@@ -274,6 +302,17 @@ module cpu(
                 HI_in,
                 LO_in,
                 DivZero
+        );
+
+//------Estendedor e Shifter
+        LT_extender extender1_32(
+                result,
+                LT_MUX
+        );
+        PC_and_offset_concatenator extender26_28(
+                offset,
+                PC_out,
+                offset_resultado
         );
         Un_16_to_32bits un_16_32(
                 Un,
