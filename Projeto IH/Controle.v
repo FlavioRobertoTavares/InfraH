@@ -109,6 +109,9 @@ module Controle (
         {wr, ir_write, PC_write, load_ctrl, store_ctrl, EPC_write, A_write, B_write, ALU_out_write, Lo_write, Hi_write, mem_reg_write} = {1'b0}; \
         {PC_src, ALU_src_A, ALU_src_B, sh_src, sh_amt} = {2'b00}; \
         {ALU_op, iorD, sh_ctrl} = {3'b000}; \
+        bank_write = 1'b1; \
+        bank_write_data = 3'b101; \
+        bank_write_reg = 3'b011; \
         signedn = 0; \
         counter = 0; \
         state = FETCH
@@ -130,17 +133,11 @@ module Controle (
         //Resetando todos os registradores
         initial begin
                 `RESET;
-                bank_write = 1'b0;
-                bank_write_data = 3'b000;
-                bank_write_reg = 3'b000;
         end
 
         always @(posedge clk) begin
                 if (reset == 1) begin
                         `RESET;
-                        bank_write = 1'b1;
-                        bank_write_data = 3'b101;
-                        bank_write_reg = 3'b011;
                 end
                 else begin
                         case(state)
