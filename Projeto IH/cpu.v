@@ -65,7 +65,7 @@ module cpu(
         wire [31:0] rd;
         wire [31:0] rs;
         wire [5:0]  Shamt;
-        wire [31:0] write_reg;
+        wire [4:0] write_reg;
         wire [4:0]  N;
         wire [31:0] Desloc_mux;
         wire [31:0] Reg_desloc_out;
