@@ -208,8 +208,8 @@ module cpu(
                 MEM_in
         );
         Load load(
-                Load_ctrl,
                 MEM_out,
+                Load_ctrl,
                 Load_except
         );
         Store store(
