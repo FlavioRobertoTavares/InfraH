@@ -7,6 +7,11 @@ module cpu(
         wire Store_ctrl;
         wire Load_ctrl;
         reg DivZero;
+        reg Signed;
+        reg wr;
+        reg ir_write;
+        reg mem_reg_write;
+        wire zero;
         wire A_write;
         wire B_write;
         wire ALUout_write;
@@ -14,16 +19,22 @@ module cpu(
         wire LO_write;
         wire PC_write;
         wire Un;
+        wire LT;
+        wire GT;
+        wire EG;
         wire [1:0] PcSource;
         wire [1:0] ALU_src_A;
         wire [1:0] ALU_src_B;
         wire [1:0] Desloc_src;
         wire [1:0] DeslocAmount;
-        wire [1:0] DivMultControl
+        wire [1:0] DivMultControl;
         wire [2:0] bank_write_reg;
+        wire [2:0] bank_write;
         wire [2:0] bank_write_data;
         wire [2:0] Desloc_Control;
         wire [2:0] IorD;
+        wire [2:0] ALU_op;
+
 
 
 //-----Data wires
@@ -43,6 +54,8 @@ module cpu(
         wire [31:0] LO_out;
         wire [31:0] PC_Mux;
         wire [31:0] PC_out;
+        wire [5:0] OP;
+        wire [3:0] Funct;
 //-----MUXs
         wire[31:0] Offset;
         wire[31:0] Load_except;
@@ -53,7 +66,7 @@ module cpu(
         wire[4:0] N;
         wire[31:0] Desloc_mux;
         wire[31:0] Reg_desloc_out;
-        wire[31:0] Lt;
+        wire[31:0] LT_MUX;
         wire[31:0] A;
         wire[31:0] B;
         wire[31:0] write_data;
@@ -66,7 +79,44 @@ module cpu(
 //-----Store
         wire[31:0] write;
 
+        Controle unidade_controle(
+                reset,
+                clk,
+                zero,
+                DivZero,
+                overflow,
+                GT,
+                EG,
+                LT,
+                OP,
+                Funct,
+                PC_src,
+                ALU_src_A,
+                ALU_src_B,
+                Desloc_src,
+                DivMultControl,
+                Load_ctrl,
+                Store_ctrl,
+                bank_write_reg,
+                bank_write_data,
+                ALU_op,
+                IorD,
+                Desloc_Control,
+                Signed,
+                Desloc_Amount,
+                wr,
+                ir_write,
+                PC_write,
+                bank_write,
+                EPC_write,
+                A_write,
+                B_write,
+                ALUout_write,
+                LO_write,
+                HI_write,
+                mem_reg_write
 
+        );
         Registrador EPC(
                 clk,
                 reset,
@@ -88,14 +138,14 @@ module cpu(
                 MEM_in,
                 MEM_out
         );
-        Registrador A(
+        Registrador RegA(
                 clk,
                 reset,
                 A_write,
                 A_in,
                 A_out
         );
-        Registrador B(
+        Registrador RegB(
                 clk,
                 reset,
                 B_write,
@@ -142,6 +192,18 @@ module cpu(
                 Store_ctrl,
                 write
         );
+        Banco_reg Regbank(
+                clk,
+                reset,
+                bank_write,
+                rs,
+                rt,
+                write_reg,
+                write_data,
+                A_in,
+                B_in
+
+        );
         mux_PcSource MUX_1(
                 ALUout_out,
                 Offset, 
@@ -170,7 +232,7 @@ module cpu(
                 HI_out,
                 LO_out,
                 PC_out,
-                Lt,
+                LT_MUX,
                 bank_write_data,
                 write_data
         );
