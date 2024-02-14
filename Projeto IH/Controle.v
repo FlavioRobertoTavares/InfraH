@@ -64,16 +64,20 @@ module Controle (
                 end
         endtask
         task Store(input [1:0]size);
-                store_ctrl = size;
-                wr = MEM_WRITE;
-                state = FETCH;
+                begin
+                        store_ctrl = size;
+                        wr = MEM_WRITE;
+                        state = FETCH;
+                end
         endtask
         task Load(input [1:0]size);
-                load_ctrl = size;
-                bank_write_reg = 'b000;
-                bank_write_data = 'b001;
-                bank_write = 1;
-                state = FETCH;
+                begin
+                        load_ctrl = size;
+                        bank_write_reg = 'b000;
+                        bank_write_data = 'b001;
+                        bank_write = 1;
+                        state = FETCH;
+                end
         endtask
         task HandleException(input [2:0]excode);
                 begin
@@ -342,7 +346,7 @@ module Controle (
                                         end
                                 end
 
-//----------------------------- Escrever na memória
+//----------------------------- Escrever na memoria
                                 
                                 MFHI: begin 
                                         bank_write_reg = 3'b001;
@@ -357,13 +361,13 @@ module Controle (
                                         state = FETCH;
                                 end
 
-//----------------------------- Instruções de deslocamento
+//----------------------------- Instrucoes de deslocamento
 
                                 SLL: begin 
                                         if(counter == 0) begin
                                                 sh_src = 2'b01;
                                                 sh_amt = 2'b00;
-                                                sh_ctrl = 3'b001';
+                                                sh_ctrl = 3'b001;
                                                 counter = counter + 1;
                                         end
                                         else if (counter == 1)begin 
@@ -383,7 +387,7 @@ module Controle (
                                         if(counter == 0) begin
                                                 sh_src = 2'b00;
                                                 sh_amt = 2'b01;
-                                                sh_ctrl = 3'b001';
+                                                sh_ctrl = 3'b001;
                                                 counter = counter + 1;
                                         end
                                         else if (counter == 1)begin 
@@ -403,7 +407,7 @@ module Controle (
                                         if(counter == 0) begin
                                                 sh_src = 2'b01;
                                                 sh_amt = 2'b00;
-                                                sh_ctrl = 3'b001';
+                                                sh_ctrl = 3'b001;
                                                 counter = counter + 1;
                                         end
                                         else if (counter == 1)begin 
@@ -423,7 +427,7 @@ module Controle (
                                         if(counter == 0) begin
                                                 sh_src = 2'b00;
                                                 sh_amt = 2'b01;
-                                                sh_ctrl = 3'b001';
+                                                sh_ctrl = 3'b001;
                                                 counter = counter + 1;
                                         end
                                         else if (counter == 1)begin 
@@ -443,7 +447,7 @@ module Controle (
                                         if(counter == 0) begin
                                                 sh_src = 2'b01;
                                                 sh_amt = 2'b00;
-                                                sh_ctrl = 3'b001';
+                                                sh_ctrl = 3'b001;
                                                 counter = counter + 1;
                                         end
                                         else if (counter == 1)begin 
