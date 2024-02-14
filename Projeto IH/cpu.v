@@ -336,7 +336,7 @@ module cpu(
         );
         ShiftLeft2 shitleft(
                 immediate_resultado,
-                Address, 
+                Address
         );
 
 endmodule
