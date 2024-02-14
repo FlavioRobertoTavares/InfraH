@@ -4,6 +4,7 @@ module cpu(
 //----- Control wires
         wire EPC_write;
         wire MEM_write;
+        wire Store_ctrl;
         wire A_write;
         wire B_write;
         wire ALUout_write;
@@ -118,6 +119,13 @@ module cpu(
                 LO_write,
                 LO_in,
                 LO_out
+        );
+        Registrador Load(
+                clk,
+                reset,
+                Store_ctrl
+                MEM_out,
+                Load_except
         );
         RegDesloc Reg_deslocamento(
                 clk,
