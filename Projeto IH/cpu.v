@@ -57,13 +57,14 @@ module cpu(
         wire [31:0] PC_Mux;
         wire [31:0] PC_out;
         wire [5:0] OP;
-        wire [3:0] Funct;
+        wire [5:0] Funct;
 //-----MUXs
         wire[31:0] offset_resultado;
         wire[31:0] Load_except;
         wire[31:0] rt;
         wire[31:0] rd;
         wire[31:0] rs;
+        wire [5:0] Shamt;
         wire[31:0] write_reg;
         wire[4:0] N;
         wire[31:0] Desloc_mux;
@@ -204,7 +205,7 @@ module cpu(
                 clk,
                 wr,
                 write,
-                PC_out
+                MEM_in
         );
         Load load(
                 Load_ctrl,
@@ -217,6 +218,21 @@ module cpu(
                 Store_ctrl,
                 write
         );
+        Instr_Reg IR(
+                clk,
+                reset,
+                ir_write,
+                MEM_in,
+                OP,
+                rs,
+                rt,
+                immediate        
+        );
+        rd = immediate[15:11];
+        Shamt = immediate[10:6];
+        Funct = immediate[5:0];
+        offset = {rs, rt, immediate};
+        
         Banco_reg Regbank(
                 clk,
                 reset,
