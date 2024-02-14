@@ -523,7 +523,7 @@ module Controle (
                                 end
                                 ADDI_WRITE: begin
                                         ALU_out_write = 0;
-                                        bank_write_reg = 1;
+                                        bank_write_reg = 0;
                                         bank_write_data = 0;
                                         bank_write = 1;
                                         state = FETCH;
