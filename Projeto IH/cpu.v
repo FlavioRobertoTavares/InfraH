@@ -6,11 +6,11 @@ module cpu(
         wire MEM_write;
         wire bank_write;
         wire negativo;
-        reg DivZero;
-        reg Signed;
-        reg wr;
-        reg ir_write;
-        reg mem_reg_write;
+        wire DivZero;
+        wire Signedn;
+        wire wr;
+        wire ir_write;
+        wire mem_reg_write;
         wire zero;
         wire A_write;
         wire B_write;
@@ -56,70 +56,69 @@ module cpu(
         wire [31:0] LO_out;
         wire [31:0] PC_Mux;
         wire [31:0] PC_out;
-        wire [5:0] OP;
-        wire [5:0] Funct;
+        wire [5:0]  OP;
+        wire [5:0]  Funct;
 //-----MUXs
-        wire[31:0] offset_resultado;
-        wire[31:0] Load_except;
-        wire[31:0] rt;
-        wire[31:0] rd;
-        wire[31:0] rs;
-        wire [5:0] Shamt;
-        wire[31:0] write_reg;
-        wire[4:0] N;
-        wire[31:0] Desloc_mux;
-        wire[31:0] Reg_desloc_out;
-        wire[31:0] LT_MUX;
-        wire[31:0] A;
-        wire[31:0] B;
-        wire[31:0] write_data;
-        wire[31:0] Mux_Memo;
+        wire [31:0] offset_resultado;
+        wire [31:0] Load_except;
+        wire [31:0] rt;
+        wire [31:0] rd;
+        wire [31:0] rs;
+        wire [5:0]  Shamt;
+        wire [31:0] write_reg;
+        wire [4:0]  N;
+        wire [31:0] Desloc_mux;
+        wire [31:0] Reg_desloc_out;
+        wire [31:0] LT_MUX;
+        wire [31:0] A;
+        wire [31:0] B;
+        wire [31:0] write_data;
+        wire [31:0] Mux_Memo;
 //-----Estendedor
-        wire[15:0] immediate;
-        wire[31:0] immediate_resultado;
+        wire [15:0] immediate;
+        wire [31:0] immediate_resultado;
 //-----Shiftleft
-        wire[31:0] Address;
+        wire [31:0] Address;
 //-----Store
-        wire[31:0] write;
+        wire [31:0] write;
 //------Unidade de controle
 
         Controle unidade_controle(
-                reset,
-                clk,
-                zero,
-                DivZero,
-                overflow,
-                GT,
-                EG,
-                LT,
-                OP,
-                Funct,
-                PC_src,
-                ALU_src_A,
-                ALU_src_B,
-                Desloc_src,
-                DivMultControl,
-                Load_ctrl,
-                Store_ctrl,
-                bank_write_reg,
-                bank_write_data,
-                ALU_op,
-                IorD,
-                Desloc_Control,
-                Signed,
-                Desloc_Amount,
-                wr,
-                ir_write,
-                PC_write,
-                bank_write,
-                EPC_write,
-                A_write,
-                B_write,
-                ALUout_write,
-                LO_write,
-                HI_write,
-                mem_reg_write
-
+                .reset(reset),
+                .clk(clk),
+                .zero(zero),
+                .div_zero(DivZero),
+                .overflow(overflow),
+                .GT(GT),
+                .EG(EG),
+                .LT(LT),
+                .OP(OP),
+                .funct(Funct),
+                .PC_src(PcSource),
+                .ALU_src_A(ALU_src_A),
+                .ALU_src_B(ALU_src_B),
+                .sh_src(Desloc_src),
+                .div_mult_ctrl(DivMultControl),
+                .load_ctrl(Load_ctrl),
+                .store_ctrl(Store_ctrl),
+                .bank_write_reg(bank_write_reg),
+                .bank_write_data(bank_write_data),
+                .ALU_op(ALU_op),
+                .iorD(IorD),
+                .sh_ctrl(Desloc_Control),
+                .signedn(Signedn),
+                .sh_amt(DeslocAmount),
+                .wr(wr),
+                .ir_write(ir_write),
+                .PC_write(PC_write),
+                .bank_write(bank_write),
+                .EPC_write(EPC_write),
+                .A_write(A_write),
+                .B_write(B_write),
+                .ALU_out_write(ALUout_write),
+                .Lo_write(LO_write),
+                .Hi_write(HI_write),
+                .mem_reg_write(mem_reg_write)
         );
 //------ULA
         ula32 ULA(
@@ -228,10 +227,10 @@ module cpu(
                 rt,
                 immediate        
         );
-        rd = immediate[15:11];
-        Shamt = immediate[10:6];
-        Funct = immediate[5:0];
-        offset = {rs, rt, immediate};
+        assign  rd = immediate[15:11],
+                Shamt = immediate[10:6],
+                Funct = immediate[5:0],
+                offset = {rs, rt, immediate};
         
         Banco_reg Regbank(
                 clk,
