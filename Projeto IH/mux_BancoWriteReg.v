@@ -6,6 +6,6 @@ module mux_BancoWriteReg (
                     (BancoWriteReg == 2)? rs :
                     (BancoWriteReg == 3)? 29 : // SP
                     (BancoWriteReg == 4)? 31 : // JAL
-                    5'hxxxxxxxx; 
+                    5'bxxxxx; 
 
 endmodule
