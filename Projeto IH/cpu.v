@@ -5,6 +5,8 @@ module cpu(
         wire EPC_write;
         wire MEM_write;
         wire Store_ctrl;
+        wire Load_ctrl;
+        reg DivZero;
         wire A_write;
         wire B_write;
         wire ALUout_write;
@@ -17,13 +19,15 @@ module cpu(
         wire [1:0] ALU_src_B;
         wire [1:0] Desloc_src;
         wire [1:0] DeslocAmount;
+        wire [1:0] DivMultControl
         wire [2:0] bank_write_reg;
         wire [2:0] bank_write_data;
         wire [2:0] Desloc_Control;
         wire [2:0] IorD;
 
+
 //-----Data wires
-        wire [31:0] EPC_in; 
+        wire [31:0] result; 
         wire [31:0] EPC_out;
         wire [31:0] MEM_in; 
         wire [31:0] MEM_out;
@@ -49,8 +53,6 @@ module cpu(
         wire[4:0] N;
         wire[31:0] Desloc_mux;
         wire[31:0] Reg_desloc_out;
-        wire[31:0] Hi;
-        wire[31:0] Lo;
         wire[31:0] Lt;
         wire[31:0] A;
         wire[31:0] B;
@@ -61,14 +63,15 @@ module cpu(
         wire[31:0] immediate_resultado;
 //-----Shiftleft
         wire[31:0] Address;
-
+//-----Store
+        wire[31:0] write;
 
 
         Registrador EPC(
                 clk,
                 reset,
                 EPC_write,
-                PC_in,
+                result,
                 EPC_out
         );
         Registrador PC(
@@ -103,7 +106,7 @@ module cpu(
                 clk,
                 reset,
                 ALUout_write,
-                ALUout_in,
+                result,
                 ALUout_out
         );
         Registrador HI(
@@ -120,20 +123,24 @@ module cpu(
                 LO_in,
                 LO_out
         );
-        Load load(
-                clk,
-                reset,
-                Store_ctrl
-                MEM_out,
-                Load_except
-        );
         RegDesloc Reg_deslocamento(
                 clk,
                 reset,
                 Desloc_Control,
                 N,
-                Desloc_mux;
-                Reg_desloc_out;
+                Desloc_mux,
+                Reg_desloc_out
+        );
+        Load load(
+                Load_ctrl,
+                MEM_out,
+                Load_except
+        );
+        Store store(
+                MEM_out,
+                B_out,
+                Store_ctrl,
+                write
         );
         mux_PcSource MUX_1(
                 ALUout_out,
@@ -160,8 +167,8 @@ module cpu(
                 ALUout_out,
                 Load_except,
                 Reg_desloc_out,
-                Hi,
-                Lo,
+                HI_out,
+                LO_out,
                 PC_out,
                 Lt,
                 bank_write_data,
@@ -195,6 +202,16 @@ module cpu(
                 Load_except,
                 Desloc_Amount,
                 N
+        );
+        MultDiv Mult_Div(
+                A_out,
+                B_out,
+                DivMultControl,
+                clk,
+                reset,
+                HI_in,
+                LO_in,
+                DivZero
         );
         Un_16_to_32bits un_16_32(
                 Un,
