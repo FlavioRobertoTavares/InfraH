@@ -5,8 +5,6 @@ module cpu(
         wire EPC_write;
         wire MEM_write;
         wire negativo;
-        wire Store_ctrl;
-        wire Load_ctrl;
         reg DivZero;
         reg Signed;
         reg wr;
@@ -23,6 +21,8 @@ module cpu(
         wire LT;
         wire GT;
         wire EG;
+        wire [1:0] Store_ctrl;
+        wire [1:0] Load_ctrl;
         wire [1:0] PcSource;
         wire [1:0] ALU_src_A;
         wire [1:0] ALU_src_B;
