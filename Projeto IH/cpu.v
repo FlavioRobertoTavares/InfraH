@@ -64,7 +64,7 @@ module cpu(
         wire [4:0] rs;
         wire [31:0] offset_resultado;
         wire [31:0] Load_except;
-        wire [5:0]  Shamt;
+        wire [4:0]  Shamt;
         wire [4:0] write_reg;
         wire [4:0]  N;
         wire [31:0] Desloc_mux;
@@ -286,7 +286,7 @@ module cpu(
         );
         mux_ALUsrcB MUX_6(
                 B_out,
-                Addres,
+                Address,
                 immediate_resultado,
                 ALU_src_B,
                 B
@@ -300,10 +300,10 @@ module cpu(
 
         );
         mux_DeslocAmount MUX_8(
-                Shamt,
+                {27'b0, Shamt},
                 B_out,
                 Load_except,
-                Desloc_Amount,
+                DeslocAmount,
                 N
         );
 
@@ -321,7 +321,7 @@ module cpu(
 
 //------Estendedor e Shifter
         LT_extender extender1_32(
-                result,
+                LT,
                 LT_MUX
         );
         PC_and_offset_concatenator extender26_28(

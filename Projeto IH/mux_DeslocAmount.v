@@ -3,8 +3,8 @@ module mux_DeslocAmount (
     
     assign N =  (DeslocAmount == 0)? Shamt :
                 (DeslocAmount == 1)? RegB :
-                (DeslocAmount == 2)? 16 : //Imeddiate
+                (DeslocAmount == 2)? 32'd16 : //Imeddiate
                 (DeslocAmount == 3)? Load :
-                32'hxxxxxxxx; 
+                32'hxxxx_xxxx;
 
 endmodule
