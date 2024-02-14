@@ -120,7 +120,7 @@ module cpu(
                 LO_in,
                 LO_out
         );
-        Registrador Load(
+        Load load(
                 clk,
                 reset,
                 Store_ctrl
