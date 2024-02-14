@@ -4,6 +4,7 @@ module cpu(
 //----- Control wires
         wire EPC_write;
         wire MEM_write;
+        wire bank_write;
         wire negativo;
         reg DivZero;
         reg Signed;
@@ -30,7 +31,6 @@ module cpu(
         wire [1:0] DeslocAmount;
         wire [1:0] DivMultControl;
         wire [2:0] bank_write_reg;
-        wire [2:0] bank_write;
         wire [2:0] bank_write_data;
         wire [2:0] Desloc_Control;
         wire [2:0] IorD;
