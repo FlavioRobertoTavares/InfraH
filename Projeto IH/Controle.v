@@ -14,7 +14,7 @@ module Controle (
 
         //Entradas de Intrucoes
         input   wire[5:0] OP,
-                wire[3:0] funct,
+                wire[5:0] funct,
 
         //Sinais de selecao
         output  reg[1:0] PC_src,                //PC source
