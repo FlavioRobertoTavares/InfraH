@@ -200,6 +200,7 @@ module Controle (
                                                                         SRL_FUNCT:   state = SRL;
                                                                         SUB_FUNCT:   state = SUB;
                                                                         BREAK_FUNCT: state = BREAK;
+                                                                        RTE_FUNCT:   state = RTE;
                                                                         XCHG_FUNCT:  state = XCHG;
                                                                         default:     state = OPCODE_INEXISTENTE;
                                                                 endcase
@@ -338,6 +339,15 @@ module Controle (
                                         end
                                         else if(counter == 1) begin
                                                 PC_src = 2'b00;
+                                                PC_write = 1'b1;
+                                                counter = 0;
+                                                state = FETCH;
+                                        end
+                                end
+
+                                RTE: begin
+                                        if(counter == 0) begin
+                                                PC_src = 2'b11;
                                                 PC_write = 1'b1;
                                                 counter = 0;
                                                 state = FETCH;
