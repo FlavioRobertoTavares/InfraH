@@ -169,7 +169,6 @@ module Controle (
                                         if(counter == 0) begin
                                                 //Zerando sinais de escrita do estado anterior
                                                 ir_write = 0;
-                                                ALU_out_write = 0;
                                                 PC_write = 0;
                                                 //Calculo adiantado do Branch
                                                 ALU_src_A = A_SRC_PC;
@@ -180,6 +179,7 @@ module Controle (
                                                 counter = 1;
                                         end
                                         else begin
+                                                ALU_out_write = 0;
                                                 counter = 0;
                                                 `RESET_WRITE;
                                                 case(OP)
@@ -502,7 +502,7 @@ module Controle (
 //----------------------------- ADDs com imediato
 
                                 ADDI: begin
-                                        signedn = 1;
+                                        signedn = 0;
                                         ALU_src_A = A_SRC_A;
                                         ALU_src_B = B_SRC_IMMEDIATE;
                                         ALU_op = ALU_ADD;
@@ -520,6 +520,7 @@ module Controle (
 
                                 end
                                 ADDI_WRITE: begin
+                                        signedn = 0;
                                         ALU_out_write = 0;
                                         bank_write_reg = 0;
                                         bank_write_data = 0;
