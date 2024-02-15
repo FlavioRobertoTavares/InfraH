@@ -39,7 +39,6 @@ module cpu(
 
 //-----Data wires
         wire [31:0] result; 
-        wire [25:0] offset;
         wire [31:0] EPC_out;
         wire [31:0] MEM_in; 
         wire [31:0] MEM_out;
@@ -228,8 +227,7 @@ module cpu(
         );
         assign  rd = immediate[15:11],
                 Shamt = immediate[10:6],
-                Funct = immediate[5:0],
-                offset = {rs, rt, immediate};
+                Funct = immediate[5:0];
         
         Banco_reg Regbank(
                 clk,
@@ -324,7 +322,7 @@ module cpu(
                 LT_MUX
         );
         PC_and_offset_concatenator extender26_28(
-                offset,
+                {rs, rt, immediate},
                 PC_out,
                 offset_resultado
         );
