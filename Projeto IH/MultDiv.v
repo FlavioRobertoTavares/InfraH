@@ -29,20 +29,23 @@ module MultDiv (
             //Config inicial para div
             quo = 0;
             if (A[31] == 1) begin
-                div[63:32] = ~A + 1; //Ver se precisa por isso dentro do bloco de ação
+                resto[31:0] = ~A + 1; //Ver se precisa por isso dentro do bloco de ação
             end
 
             else begin
-                div[63:32] = A;
+                resto[31:0] = A;
             end
 
             if (B[31] == 1) begin
-                resto[31:0] = ~B + 1; //Ver se precisa por isso dentro do bloco de ação
+                div[63:32] = ~B + 1; //Ver se precisa por isso dentro do bloco de ação
             end
 
             else begin
-                resto[31:0] = B;
+                div[63:32] = B;
             end
+
+            resto[63:32] = 0;
+            div[31:0] = 0;
 
             //Comum      
             i = 0;
@@ -97,7 +100,7 @@ module MultDiv (
                 end
 
                 else begin
-                    resto = resto + div;
+                    resto =  resto+ div;
                     quo = quo << 1;
                     quo[0] = 0;
                 end
@@ -107,20 +110,24 @@ module MultDiv (
 
                 if (i == 33) begin
                     if (A[31] != B[31]) begin
-                        quo = ~quo + 1;
-
+                    
                         if (A[31] == 1) begin
+                            quo = ~quo + 1;
+                        end
+                        else begin
+                            quo = ~quo + 1;
                             resto = ~resto + 1;
                         end
+
                     end
 
-                    else if((A[31] == 1) && (B[31] == 1)) begin
+                    else if(A[31] == 1) begin
                         resto = ~resto + 1;
                         
                     end
                 
                     Lo = quo;
-                    Hi = resto; //checar se pode assim
+                    Hi = resto[31:0]; //checar se pode assim
                 end
             end
 
