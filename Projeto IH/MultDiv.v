@@ -52,7 +52,7 @@ module MultDiv (
             
         end
 
-        if (DivMultControl == 1 && reset = 0) begin
+        if (DivMultControl == 1 && reset == 0) begin
             //multiplica
             
             if (Q[0] == 0 && q == 1) begin
@@ -80,7 +80,7 @@ module MultDiv (
             end
         end
 
-        else if (DivMultControl == 2 && reset = 0) begin
+        else if (DivMultControl == 2 && reset == 0) begin
             //divide
 
             if (B == 0) begin
