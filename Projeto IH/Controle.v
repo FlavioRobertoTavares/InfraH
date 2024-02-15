@@ -153,6 +153,7 @@ module Controle (
                                                 ALU_src_B = B_SRC_4;
                                                 ALU_op = ALU_ADD;
                                                 PC_src = PC_SRC_ALU_OUT;
+                                                ALU_out_write = 1;
 
                                                 counter = counter + 1;
                                         end
@@ -168,12 +169,12 @@ module Controle (
                                         if(counter == 0) begin
                                                 //Zerando sinais de escrita do estado anterior
                                                 ir_write = 0;
+                                                ALU_out_write = 0;
                                                 PC_write = 0;
                                                 //Calculo adiantado do Branch
                                                 ALU_src_A = A_SRC_PC;
                                                 ALU_src_B = B_SRC_ADDR;
                                                 ALU_op = ALU_ADD;
-                                                ALU_out_write = 1;
                                                 A_write = 1;
                                                 B_write = 1;
                                                 counter = 1;
