@@ -553,11 +553,26 @@ module Controle (
                                         state = FETCH;
                                 end
 
-//----------------------------- Set Less Than Immediate
+//----------------------------- Set Less Than 
+
+                                SLT: begin
+                                        if (counter == 0) begin
+                                                Compare(A_SRC_A, B_SRC_IMMEDIATE);
+                                                counter = 1;
+                                        end
+                                        else begin
+                                                counter = 0;
+                                                bank_write_reg = 'b001;
+                                                bank_write_data = 'b111;
+                                                bank_write = 1;
+                                                state = FETCH;
+                                        end
+                                end
+
 
                                 SLTI: begin
                                         if (counter == 0) begin
-                                                Compare(A_SRC_A, B_SRC_IMMEDIATE);
+                                                Compare(A_SRC_A, B_SRC_B);
                                                 counter = 1;
                                         end
                                         else begin
