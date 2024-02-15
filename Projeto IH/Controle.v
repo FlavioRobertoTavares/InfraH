@@ -54,7 +54,7 @@ module Controle (
         `include "Param_Muxes.vh"
 
         reg [5:0]state;
-        reg [3:0]counter;
+        reg [5:0]counter;
 
         task Compare(input [1:0]src_A, input [1:0]src_B);
                 begin 
@@ -126,6 +126,7 @@ module Controle (
         A_write = 0;\
         B_write = 0;\
         EPC_write = 0;\
+        div_mult_ctrl = 2'b00;\
         wr = MEM_READ;\
         mem_reg_write = 0;\
         ir_write = 0
