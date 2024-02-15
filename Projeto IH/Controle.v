@@ -56,52 +56,63 @@ module Controle (
         reg [5:0]state;
         reg [3:0]counter;
 
-        task Compare(input [1:0]src_A, input [1:0]src_B);
-                begin 
-                        ALU_src_A = src_A;
-                        ALU_src_B = src_B;
-                        ALU_op = ALU_CMP;
-                end
+        task ALU_Operation(input[1:0] op, src_A, src_B); begin
+                ALU_op = op;
+                ALU_src_A = src_A;
+                ALU_src_B = src_B;
+        end
         endtask
-        task Store(input [1:0]size);
-                begin
-                        store_ctrl = size;
-                        wr = MEM_WRITE;
-                        state = FETCH;
+        task Branch(input condition); begin 
+                if (counter == 0) begin
+                        ALU_Operation(ALU_CMP, A_SRC_A, B_SRC_B);
+                        counter = 1;
                 end
-        endtask
-        task Load(input [1:0]size);
-                begin
-                        load_ctrl = size;
-                        bank_write_reg = 'b000;
-                        bank_write_data = 'b001;
-                        bank_write = 1;
-                        state = FETCH;
-                end
-        endtask
-        task HandleException(input [2:0]excode);
-                begin
-                        if (counter < 3) begin
-                                //PC - 4
-                                ALU_src_A = A_SRC_PC;
-                                ALU_src_B = B_SRC_4;
-                                ALU_op = ALU_SUB;
-
-                                EPC_write = 1;
-                                iorD = excode;
-                                wr = MEM_READ;
-                                mem_reg_write = 1;
-                                PC_src = PC_SRC_LOAD;
-                                counter = counter + 1;
-                        end
-                        else begin
-                                load_ctrl = BYTE;
+                else begin
+                        if(condition) begin
                                 PC_write = 1;
-                                counter = 0;
-                                state = FETCH;
+                                PC_src = PC_SRC_ALU_OUT;
                         end
-
+                        counter = 0;
+                        state = FETCH;
                 end
+        end
+        endtask
+        task Store(input [1:0]size); begin
+                store_ctrl = size;
+                wr = MEM_WRITE;
+                state = FETCH;
+        end
+        endtask
+        task Load(input [1:0]size); begin
+                load_ctrl = size;
+                bank_write_reg = 'b000;
+                bank_write_data = 'b001;
+                bank_write = 1;
+                state = FETCH;
+        end
+        endtask
+        task HandleException(input [2:0]excode); begin
+                if (counter < 3) begin
+                        //PC - 4
+                        ALU_src_A = A_SRC_PC;
+                        ALU_src_B = B_SRC_4;
+                        ALU_op = ALU_SUB;
+
+                        EPC_write = 1;
+                        iorD = excode;
+                        wr = MEM_READ;
+                        mem_reg_write = 1;
+                        PC_src = PC_SRC_LOAD;
+                        counter = counter + 1;
+                end
+                else begin
+                        load_ctrl = BYTE;
+                        PC_write = 1;
+                        counter = 0;
+                        state = FETCH;
+                end
+
+        end
         endtask
 
         // Macro para zerar todos os regitradores de saída. Pode ser substituido por uma Task futuramente
@@ -143,6 +154,7 @@ module Controle (
                         case(state)
 
                                 FETCH: begin
+
                                         if(counter < 3) begin
                                                 //Ler instrucao
                                                 iorD = PC_ADDR;
@@ -540,23 +552,12 @@ module Controle (
 
 //----------------------------- Branches
 
-                                BEQ: begin
-                                        Compare(A_SRC_A, B_SRC_B);
-// DUVIDA                               //Pode checar flags de cmp no mesmo ciclo?
-                                        state = (EG)? BRANCH_WRITE : FETCH;
-                                end
-                                BNE: begin
-                                        Compare(A_SRC_A, B_SRC_B);
-                                        state = (EG)? FETCH : BRANCH_WRITE;
-                                end
-                                BLE: begin
-                                        Compare(A_SRC_A, B_SRC_B);
-                                        state = (GT)? FETCH : BRANCH_WRITE;
-                                end
-                                BGT: begin
-                                        Compare(A_SRC_A, B_SRC_B);
-                                        state = (GT)? BRANCH_WRITE: FETCH;
-                                end
+                                BEQ: Branch(EG);
+                                BNE: Branch(!EG);
+                                BGT: Branch(GT);
+                                BLE: Branch(!GT);
+
+                                //Deprecated
                                 BRANCH_WRITE: begin
                                         PC_src = PC_SRC_ALU_OUT;
                                         PC_write = 1;
@@ -567,7 +568,7 @@ module Controle (
 
                                 SLT: begin
                                         if (counter == 0) begin
-                                                Compare(A_SRC_A, B_SRC_IMMEDIATE);
+                                                ALU_Operation(ALU_CMP, A_SRC_A, B_SRC_B);
                                                 counter = 1;
                                         end
                                         else begin
@@ -582,7 +583,7 @@ module Controle (
 
                                 SLTI: begin
                                         if (counter == 0) begin
-                                                Compare(A_SRC_A, B_SRC_B);
+                                                ALU_Operation(ALU_CMP, A_SRC_A, B_SRC_IMMEDIATE);
                                                 counter = 1;
                                         end
                                         else begin
@@ -694,16 +695,29 @@ module Controle (
 //----------------------------- Instrucoes do tipo j
 
                                 JAL: begin
-                                        bank_write_reg = 'b100;
-                                        bank_write_data = 'b110;
-                                        bank_write = 1;
-                                        state = J;
+                                        if (counter == 0) begin
+                                                bank_write_reg = 'b100;
+                                                bank_write_data = 'b110;
+                                                bank_write = 1;
+                                                counter = 1;
+                                                PC_write = 1;
+                                                PC_src = PC_SRC_OFFSET;
+                                        end
+                                        else if (counter == 1) begin
+                                                PC_write = 0;
+                                                bank_write = 0;
+                                                state = FETCH;
+                                        end
                                 end
                                 J: begin
-                                        bank_write = 0;
-                                        PC_src = PC_SRC_OFFSET;
-                                        PC_write = 1;
-                                        state = FETCH;
+                                        if (counter == 0) begin
+                                                PC_src = PC_SRC_OFFSET;
+                                                counter = 1;
+                                        end
+                                        else if (counter == 1) begin
+                                                PC_write = 1;
+                                                state = FETCH;
+                                        end
                                 end
 
                         endcase
