@@ -54,7 +54,7 @@ module Controle (
         `include "Param_Muxes.vh"
 
         reg [5:0]state;
-        reg [3:0]counter;
+        reg [5:0]counter;
 
         task ALU_Operation(input[1:0] op, src_A, src_B); begin
                 ALU_op = op;
@@ -137,6 +137,7 @@ module Controle (
         A_write = 0;\
         B_write = 0;\
         EPC_write = 0;\
+        div_mult_ctrl = 2'b00;\
         wr = MEM_READ;\
         mem_reg_write = 0;\
         ir_write = 0
@@ -490,30 +491,35 @@ module Controle (
 
 //----------------------------- Exchange
 
-                                XCHG: begin
+                                XCHG: begin //todos os sinais batem, mas o BR não escreve?
                                         case(counter)
                                                 0: begin
                                                         ALU_src_A = A_SRC_A;
                                                         ALU_op = 0;
-                                                        ALU_out_write = 1;
+                                                        ALU_out_write = 1'b1;
                                                         counter = 1;
                                                 end
                                                 1: begin
-                                                        bank_write_reg = 'b000;
-                                                        bank_write_data = 'b000;
-                                                        bank_write = 1;
+                                                        bank_write_reg = 3'b000;
+                                                        bank_write_data = 3'b000;
+                                                        bank_write = 1'b1;
                                                         counter = 2;
                                                 end
                                                 2: begin
-                                                        ALU_src_A = A_SRC_B;
-                                                        ALU_op = 0;
-                                                        ALU_out_write = 1;
+                                                        ALU_out_write = 1'b0; //wait
+                                                        bank_write = 1'b0;
                                                         counter = 3;
                                                 end
                                                 3: begin
+                                                        ALU_src_A = A_SRC_B;
+                                                        ALU_op = 0;
+                                                        ALU_out_write = 1'b1;
+                                                        counter = 4;
+                                                end
+                                                4: begin
                                                         bank_write_reg = 'b010;
                                                         bank_write_data = 'b000;
-                                                        bank_write = 1;
+                                                        bank_write = 1'b1;
                                                         counter = 0;
                                                         state = FETCH;
                                                 end
