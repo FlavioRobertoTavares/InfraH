@@ -18,7 +18,6 @@ module cpu(
         wire HI_write;
         wire LO_write;
         wire PC_write;
-        wire Un;
         wire LT;
         wire GT;
         wire EG;
@@ -330,7 +329,7 @@ module cpu(
                 offset_resultado
         );
         Un_16_to_32bits un_16_32(
-                Un,
+                Signedn,
                 immediate,
                 immediate_resultado
         );
