@@ -337,10 +337,10 @@ module Controle (
                                         if(counter <= 32) begin
                                                 div_mult_ctrl = 2'b10;
                                                 counter = counter + 1;
-                                        end
-                                        else if(div_zero == 1) begin
-                                                state = DIVZERO;
-                                                counter = 0;
+                                                if(div_zero == 1) begin
+                                                        state = DIVZERO;
+                                                        counter = 0;
+                                                end
                                         end
                                         else if(counter == 33) begin
                                                 Hi_write = 1'b1;
