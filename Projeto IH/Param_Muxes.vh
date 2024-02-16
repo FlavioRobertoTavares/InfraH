@@ -30,6 +30,31 @@ localparam  SHIFT_A         = 0,
             SHIFT_IMMEDIATE = 2,
             SHIFT_16        = 2,
             SHIFT_LOAD      = 3;
+
+//Operações de Shift
+localparam  SH_REG_RESET    = 0,
+            SH_REG_WRITE    = 1,
+            SH_OP_LEFT      = 2,
+            SH_OP_RL        = 3,
+            SH_OP_RA        = 4;
+
+//Bank Data MUXes
+localparam  BANK_ALU        = 0,
+            BANK_LOAD       = 1,
+            BANK_SHIFT      = 2,
+            BANK_HI         = 3,
+            BANK_LO         = 4,
+            BANK_STACK      = 5,
+            BANK_PC         = 6,
+            BANK_LT         = 7;
+
+//Bank Reg MUXes
+localparam  BANK_RT = 0,
+            BANK_RD = 1,
+            BANK_RS = 2,
+            BANK_SP = 3,
+            BANK_RA = 4;
+
 //Memoria
 localparam  MEM_READ    = 0,
             MEM_WRITE   = 1,
