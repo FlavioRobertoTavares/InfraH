@@ -66,6 +66,26 @@ module Controle (
                 ALU_src_B = src_B;
         end
         endtask
+        task ALU_Forward(input[1:0] src); begin
+                ALU_op = 0;
+                ALU_src_A = src;
+                ALU_out_write = 1;
+        end
+        endtask
+        task Add(input[1:0] src_A, src_B); begin 
+                ALU_Operation(ALU_ADD, src_A, src_B);
+                ALU_out_write = 1;
+        end
+        endtask
+        task Set_Less_Than(input[1:0] dest, src); begin
+                if (counter == 0) ALU_Operation(ALU_CMP, A_SRC_A, src);
+                else begin
+                        Bank_Write(dest, BANK_LT);
+                        state = FETCH;
+                end
+                counter = (counter < 1)? counter + 1 : 0;
+        end
+        endtask
         task Shift(input[2:0] op, dest, input[1:0]src, amt); begin
                 case(counter)
                         0: begin
@@ -83,10 +103,8 @@ module Controle (
                 counter = (counter < 2)? counter + 1 : 0;
         end
         endtask
-        task Shift_R(input[2:0]op, input[1:0]src, amt); Shift(op, BANK_RD, src, amt);
-        endtask
-        task Shift_I(input[2:0]op, input[1:0]src, amt); Shift(op, BANK_RT, src, amt);
-        endtask
+        task Shift_R(input[2:0]op, input[1:0]src, amt); Shift(op, BANK_RD, src, amt); endtask
+        task Shift_I(input[2:0]op, input[1:0]src, amt); Shift(op, BANK_RT, src, amt); endtask
         task Branch(input condition); begin 
                 if (counter == 0) ALU_Operation(ALU_CMP, A_SRC_A, B_SRC_B);
                 else begin
@@ -115,11 +133,7 @@ module Controle (
         endtask
         task HandleException(input [2:0]excode); begin
                 if (counter < 3) begin
-                        //PC - 4
-                        ALU_src_A = A_SRC_PC;
-                        ALU_src_B = B_SRC_4;
-                        ALU_op = ALU_SUB;
-
+                        ALU_Operation(ALU_SUB, A_SRC_PC, B_SRC_4); // PC = PC - 4
                         EPC_write = 1;
                         iorD = excode;
                         wr = MEM_READ;
@@ -133,7 +147,6 @@ module Controle (
                         counter = 0;
                         state = FETCH;
                 end
-
         end
         endtask
 
@@ -204,9 +217,7 @@ module Controle (
                                                 ir_write = 0;
                                                 PC_write = 0;
                                                 //Calculo adiantado do Branch
-                                                ALU_src_A = A_SRC_PC;
-                                                ALU_src_B = B_SRC_ADDR;
-                                                ALU_op = ALU_ADD;
+                                                ALU_Operation(ALU_ADD, A_SRC_PC, B_SRC_ADDR);
                                                 A_write = 1;
                                                 B_write = 1;
                                                 counter = 1;
@@ -353,9 +364,7 @@ module Controle (
 
                                 JR: begin
                                         if (counter == 0) begin 
-                                                ALU_src_A = 2'b10;
-                                                ALU_op = 3'b000;
-                                                ALU_out_write = 1'b1;
+                                                ALU_Forward(A_SRC_A);
                                                 counter = counter + 1;
                                         end
                                         else if(counter == 1) begin
@@ -404,24 +413,14 @@ module Controle (
 
 //----------------------------- Exchange
 
-                                XCHG: begin //todos os sinais batem, mas o BR não escreve?
+                                XCHG: begin // testar pipeline futuramente
                                         case(counter)
-                                                0: begin
-                                                        ALU_src_A = A_SRC_A;
-                                                        ALU_op = 0;
-                                                        ALU_out_write = 1'b1;
+                                                0:      ALU_Forward(A_SRC_A);
+                                                1: begin
+                                                        Bank_Write(BANK_RT, BANK_ALU);
+                                                        ALU_Forward(A_SRC_B);
                                                 end
-                                                1:      Bank_Write(BANK_RT, BANK_ALU);
                                                 2: begin
-                                                        ALU_out_write = 1'b0; //wait
-                                                        bank_write = 1'b0;
-                                                end
-                                                3: begin
-                                                        ALU_src_A = A_SRC_B;
-                                                        ALU_op = 0;
-                                                        ALU_out_write = 1'b1;
-                                                end
-                                                4: begin
                                                         Bank_Write(BANK_RS, BANK_ALU);
                                                         state = FETCH;
                                                 end
@@ -436,20 +435,18 @@ module Controle (
                                         signedn = 0;
                                         ALU_Operation(ALU_ADD, A_SRC_A, B_SRC_IMMEDIATE);
                                         ALU_out_write = 1;
-// DUVIDA:                              Pode checar overflow no mesmo ciclo?
-                                        state = (overflow)? OVERFLOW : ADDI_WRITE;
+                                        state = ADDI_WRITE;
                                 end
                                 ADDIU: begin
                                         signedn = 1;
                                         ALU_Operation(ALU_ADD, A_SRC_A, B_SRC_IMMEDIATE);
                                         ALU_out_write = 1;
                                         state = ADDI_WRITE;
-
                                 end
                                 ADDI_WRITE: begin
                                         ALU_out_write = 0;
                                         signedn = 0;
-                                        if (overflow) state = OVERFLOW;
+                                        if (state == ADDI && overflow) state = OVERFLOW;
                                         else begin
                                                 Bank_Write(BANK_RT, BANK_ALU);
                                                 state = FETCH;
@@ -468,24 +465,9 @@ module Controle (
 
 //----------------------------- Set Less Than 
 
-                                SLT: begin
-                                        if (counter == 0) ALU_Operation(ALU_CMP, A_SRC_A, B_SRC_B);
-                                        else begin
-                                                Bank_Write(BANK_RD, BANK_LT);
-                                                state = FETCH;
-                                        end
-                                        counter = (counter < 1)? counter + 1 : 0;
-                                end
+                                SLT: Set_Less_Than(BANK_RD, B_SRC_B);
 
-
-                                SLTI: begin
-                                        if (counter == 0) ALU_Operation(ALU_CMP, A_SRC_A, B_SRC_IMMEDIATE);
-                                        else begin
-                                                Bank_Write(BANK_RT, BANK_LT);
-                                                state = FETCH;
-                                        end
-                                        counter = (counter < 1)? counter + 1 : 0;
-                                end
+                                SLTI: Set_Less_Than(BANK_RT, B_SRC_IMMEDIATE);
 
 //----------------------------- Acesso a memoria
 
