@@ -21,6 +21,7 @@ module Controle (
                 reg[1:0] ALU_src_A,             //ALU source A
                 reg[1:0] ALU_src_B,             //ALU source B
                 reg[1:0] sh_src,                //Deslocamento source
+                reg[1:0] sh_amt,                //Deslocamento amount
                 reg[1:0] div_mult_ctrl,         //Div/mult control
                 reg[1:0] load_ctrl,             //Seleciona bite, half ou word
                 reg[1:0] store_ctrl,            //Seleciona bite, half ou word
@@ -31,9 +32,6 @@ module Controle (
                 reg[2:0] sh_ctrl,               //Deslocamento controle
 
         output  reg signedn,                    //Signed/unsigned control
-        
-        //Sinais de dados
-        output  reg[1:0] sh_amt,                //Deslocamento amount
 
         //Sinais de leitura/escrita
         output  reg wr,                         //Memory read/write
@@ -56,38 +54,56 @@ module Controle (
         reg [5:0]state;
         reg [5:0]counter;
 
+        task Bank_Write(input[2:0] bank_reg, data); begin
+                bank_write_reg = bank_reg;
+                bank_write_data = data;
+                bank_write = 1;
+        end
+        endtask
         task ALU_Operation(input[1:0] op, src_A, src_B); begin
                 ALU_op = op;
                 ALU_src_A = src_A;
                 ALU_src_B = src_B;
         end
         endtask
-        task Branch(input condition); begin 
-                if (counter == 0) begin
-                        ALU_Operation(ALU_CMP, A_SRC_A, B_SRC_B);
-                        counter = 1;
+        task Shift(input[2:0]op, input[1:0]src, amt); begin
+                case(counter)
+                        0: begin
+                                sh_ctrl = SH_REG_WRITE;
+                                sh_src = src;
+                                sh_amt = amt;
+                        end
+                        1:      sh_ctrl = op;
+                        2: begin
+                                sh_ctrl = SH_REG_RESET;
+                                Bank_Write(BANK_RT, BANK_SHIFT);
                 end
+                endcase
+        end
+        endtask
+        task Branch(input condition); begin 
+                if (counter == 0) ALU_Operation(ALU_CMP, A_SRC_A, B_SRC_B);
                 else begin
                         if(condition) begin
                                 PC_write = 1;
                                 PC_src = PC_SRC_ALU_OUT;
                         end
-                        counter = 0;
                         state = FETCH;
                 end
+                counter = (counter < 1)? counter + 1 : 0;
         end
         endtask
         task Store(input [1:0]size); begin
                 store_ctrl = size;
                 wr = MEM_WRITE;
+                counter = 0;
                 state = FETCH;
         end
         endtask
         task Load(input [1:0]size); begin
                 load_ctrl = size;
-                bank_write_reg = 'b000;
-                bank_write_data = 'b001;
-                bank_write = 1;
+                Bank_Write(BANK_RT, BANK_LOAD);
+                counter = 0;
                 state = FETCH;
         end
         endtask
@@ -255,9 +271,7 @@ module Controle (
 
                                 ADD: begin
                                         if(counter == 0)begin
-                                                ALU_src_A = 2'b10;
-                                                ALU_src_B = 2'b00;
-                                                ALU_op = 3'b001;
+                                                ALU_Operation(ALU_ADD, A_SRC_A, B_SRC_B);
                                                 ALU_out_write = 1'b1;
                                                 counter = counter + 1;
                                         end
@@ -275,9 +289,7 @@ module Controle (
                                 end
                                 SUB: begin
                                         if(counter == 0)begin
-                                                ALU_src_A = 2'b10;
-                                                ALU_src_B = 2'b00;
-                                                ALU_op = 3'b010;
+                                                ALU_Operation(ALU_SUB, A_SRC_A, B_SRC_B);
                                                 ALU_out_write = 1'b1;
                                                 counter = counter + 1;
                                         end
@@ -295,9 +307,7 @@ module Controle (
                                 end
                                 AND: begin
                                         if(counter == 0)begin
-                                                ALU_src_A = 2'b10;
-                                                ALU_src_B = 2'b00;
-                                                ALU_op = 3'b011;
+                                                ALU_Operation(A_SRC_A, B_SRC_B, ALU_AND);
                                                 ALU_out_write = 1'b1;
                                                 counter = counter + 1;
                                         end
@@ -497,33 +507,23 @@ module Controle (
                                                         ALU_src_A = A_SRC_A;
                                                         ALU_op = 0;
                                                         ALU_out_write = 1'b1;
-                                                        counter = 1;
                                                 end
-                                                1: begin
-                                                        bank_write_reg = 3'b000;
-                                                        bank_write_data = 3'b000;
-                                                        bank_write = 1'b1;
-                                                        counter = 2;
-                                                end
+                                                1:      Bank_Write(BANK_RT, BANK_ALU);
                                                 2: begin
                                                         ALU_out_write = 1'b0; //wait
                                                         bank_write = 1'b0;
-                                                        counter = 3;
                                                 end
                                                 3: begin
                                                         ALU_src_A = A_SRC_B;
                                                         ALU_op = 0;
                                                         ALU_out_write = 1'b1;
-                                                        counter = 4;
                                                 end
                                                 4: begin
-                                                        bank_write_reg = 'b010;
-                                                        bank_write_data = 'b000;
-                                                        bank_write = 1'b1;
-                                                        counter = 0;
+                                                        Bank_Write(BANK_RS, BANK_ALU);
                                                         state = FETCH;
                                                 end
                                         endcase
+                                        counter = (counter < 4)? counter + 1 : 0;
 
                                 end
 
@@ -531,18 +531,14 @@ module Controle (
 
                                 ADDI: begin
                                         signedn = 0;
-                                        ALU_src_A = A_SRC_A;
-                                        ALU_src_B = B_SRC_IMMEDIATE;
-                                        ALU_op = ALU_ADD;
+                                        ALU_Operation(ALU_ADD, A_SRC_A, B_SRC_IMMEDIATE);
                                         ALU_out_write = 1;
 // DUVIDA:                              Pode checar overflow no mesmo ciclo?
                                         state = (overflow)? OVERFLOW : ADDI_WRITE;
                                 end
                                 ADDIU: begin
                                         signedn = 1;
-                                        ALU_src_A = A_SRC_A;
-                                        ALU_src_B = B_SRC_IMMEDIATE;
-                                        ALU_op = ALU_ADD;
+                                        ALU_Operation(ALU_ADD, A_SRC_A, B_SRC_IMMEDIATE);
                                         ALU_out_write = 1;
                                         state = ADDI_WRITE;
 
@@ -550,113 +546,76 @@ module Controle (
                                 ADDI_WRITE: begin
                                         signedn = 0;
                                         ALU_out_write = 0;
-                                        bank_write_reg = 0;
-                                        bank_write_data = 0;
-                                        bank_write = 1;
+                                        Bank_Write(BANK_RT, BANK_ALU);
                                         state = FETCH;
                                 end
 
 //----------------------------- Branches
 
                                 BEQ: Branch(EG);
-                                BNE: Branch(!EG);
-                                BGT: Branch(GT);
-                                BLE: Branch(!GT);
 
-                                //Deprecated
-                                BRANCH_WRITE: begin
-                                        PC_src = PC_SRC_ALU_OUT;
-                                        PC_write = 1;
-                                        state = FETCH;
-                                end
+                                BNE: Branch(!EG);
+
+                                BGT: Branch(GT);
+
+                                BLE: Branch(!GT);
 
 //----------------------------- Set Less Than 
 
                                 SLT: begin
-                                        if (counter == 0) begin
-                                                ALU_Operation(ALU_CMP, A_SRC_A, B_SRC_B);
-                                                counter = 1;
-                                        end
+                                        if (counter == 0) ALU_Operation(ALU_CMP, A_SRC_A, B_SRC_B);
                                         else begin
-                                                counter = 0;
-                                                bank_write_reg = 'b001;
-                                                bank_write_data = 'b111;
-                                                bank_write = 1;
+                                                Bank_Write(BANK_RD, BANK_LT);
                                                 state = FETCH;
                                         end
+                                        counter = (counter < 1)? counter + 1 : 0;
                                 end
 
 
                                 SLTI: begin
-                                        if (counter == 0) begin
-                                                ALU_Operation(ALU_CMP, A_SRC_A, B_SRC_IMMEDIATE);
-                                                counter = 1;
-                                        end
+                                        if (counter == 0) ALU_Operation(ALU_CMP, A_SRC_A, B_SRC_IMMEDIATE);
                                         else begin
-                                                counter = 0;
-                                                bank_write_reg = 'b000;
-                                                bank_write_data = 'b111;
-                                                bank_write = 1;
+                                                Bank_Write(BANK_RT, BANK_LT);
                                                 state = FETCH;
                                         end
+                                        counter = (counter < 1)? counter + 1 : 0;
                                 end
 
 //----------------------------- Acesso a memoria
 
                                 MEM: begin
-                                        if(counter == 0) begin
-                                                ALU_src_A = A_SRC_A;
-                                                ALU_src_B = B_SRC_OFFSET;
-                                                ALU_op = ALU_ADD;
-                                                ALU_out_write = 1;
-                                                wr = MEM_READ;
-                                                counter = counter + 1;
-                                        end
-                                        else if (counter < 3) begin
-                                                iorD = ALU_ADDR;
-                                                counter = counter + 1;
-                                                
-                                        end
-                                        else begin
-                                                counter = 0;
-                                                mem_reg_write = 1;
-                                                case(OP)
-                                                        LB_OP: state = LB;
-                                                        LH_OP: state = LH;
-                                                        LW_OP: state = LW;
-                                                        SRAM_OP: state = SRAM;
-                                                        SB_OP: state = SB;
-                                                        SH_OP: state = SH;
-                                                        SW_OP: state = SW;
-                                                        //LUI_OP????
-                                                endcase
-                                        end
 
+                                        case(counter)
+                                                0: begin
+                                                        ALU_src_A = A_SRC_A;
+                                                        ALU_src_B = B_SRC_OFFSET;
+                                                        ALU_op = ALU_ADD;
+                                                        ALU_out_write = 1;
+                                                        iorD = ALU_ADDR;
+                                                        wr = MEM_READ;
+                                                end
+                                                2: mem_reg_write = 1;
+                                                3: begin
+                                                        case(OP)
+                                                                LB_OP: state = LB;
+                                                                LH_OP: state = LH;
+                                                                LW_OP: state = LW;
+                                                                SRAM_OP: state = SRAM;
+                                                                SB_OP: state = SB;
+                                                                SH_OP: state = SH;
+                                                                SW_OP: state = SW;
+                                                        endcase
+                                                end
+                                        endcase
+                                        counter = (counter < 3)? counter + 1 : 0;
                                 end
 
 //----------------------------- LUI
 
                                 LUI: begin
-                                        case(counter)
-                                                0: begin
-                                                        sh_src = SHIFT_IMMEDIATE;
-                                                        sh_amt = SHIFT_16;
-                                                        sh_ctrl = 'b001;
-                                                        counter = 1;
-                                                end
-                                                1: begin
-                                                        sh_ctrl = 'b010;
-                                                        counter = 2;
-                                                end
-                                                2: begin
-                                                        sh_ctrl = 'b000;
-                                                        bank_write_reg = 'b000;
-                                                        bank_write_data = 'b010;
-                                                        bank_write = 1;
-                                                        counter = 0;
-                                                        state = FETCH;
-                                                end
-                                        endcase
+                                        Shift(SH_OP_LEFT, SHIFT_IMMEDIATE, SHIFT_16);
+                                        if (counter == 2) state = FETCH;
+                                        counter = (counter < 2)? counter + 1 : 0;            
                                 end
 
 //----------------------------- Instrucoes de Load
@@ -668,26 +627,12 @@ module Controle (
                                 LW: Load(WORD);
 
                                 SRAM: begin
+                                        Shift(SH_OP_RA, SHIFT_B, SHIFT_LOAD);
                                         case(counter)
-                                                0: begin
-                                                        load_ctrl = WORD;
-                                                        sh_src = SHIFT_B;
-                                                        sh_amt = SHIFT_LOAD;
-                                                        sh_ctrl = 'b001;
-                                                        counter = 1;
-                                                end
-                                                1: begin
-                                                        sh_ctrl = 'b100;
-                                                        counter = 2;
-                                                end
-                                                2: begin
-                                                        sh_ctrl = 'b000;
-                                                        bank_write_reg = 'b000;
-                                                        bank_write_data = 'b010;
-                                                        counter = 0;
-                                                        state = FETCH;
-                                                end
+                                                0: load_ctrl = WORD;
+                                                2: state = FETCH;
                                         endcase
+                                        counter = (counter < 2)? counter + 1 : 0;
                                 end
 
 //----------------------------- Instrucoes de Store
@@ -701,29 +646,32 @@ module Controle (
 //----------------------------- Instrucoes do tipo j
 
                                 JAL: begin
-                                        if (counter == 0) begin
-                                                bank_write_reg = 'b100;
-                                                bank_write_data = 'b110;
-                                                bank_write = 1;
-                                                counter = 1;
-                                                PC_write = 1;
-                                                PC_src = PC_SRC_OFFSET;
-                                        end
-                                        else if (counter == 1) begin
-                                                PC_write = 0;
-                                                bank_write = 0;
-                                                state = FETCH;
-                                        end
+                                        case(counter)
+                                                0: begin
+                                                        Bank_Write(BANK_RA, BANK_PC);
+                                                        PC_write = 1;
+                                                        PC_src = PC_SRC_OFFSET;
+                                                end
+                                                1: begin
+                                                        PC_write = 0;
+                                                        bank_write = 0;
+                                                        state = FETCH;
+                                                end
+                                        endcase
+                                        counter = (counter < 1)? counter + 1 : 0;
                                 end
                                 J: begin
-                                        if (counter == 0) begin
-                                                PC_src = PC_SRC_OFFSET;
-                                                counter = 1;
-                                        end
-                                        else if (counter == 1) begin
-                                                PC_write = 1;
-                                                state = FETCH;
-                                        end
+                                        case(counter)
+                                                0: begin
+                                                        PC_src = PC_SRC_OFFSET;
+                                                        PC_write = 1;
+                                                end
+                                                1: begin
+                                                        PC_write = 0;
+                                                        state = FETCH;
+                                                end
+                                        endcase
+                                        counter = (counter < 1)? counter + 1 : 0;
                                 end
 
                         endcase
