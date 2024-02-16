@@ -3,7 +3,6 @@ module cpu(
 );
 //----- Control wires
         wire EPC_write;
-        wire MEM_write;
         wire bank_write;
         wire negativo;
         wire DivZero;
@@ -149,7 +148,7 @@ module cpu(
         Registrador MEM(
                 clk,
                 reset,
-                MEM_write,
+                mem_reg_write,
                 MEM_in,
                 MEM_out
         );
