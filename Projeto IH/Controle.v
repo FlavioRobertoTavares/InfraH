@@ -425,7 +425,7 @@ module Controle (
                                                         state = FETCH;
                                                 end
                                         endcase
-                                        counter = (counter < 4)? counter + 1 : 0;
+                                        counter = (counter < 2)? counter + 1 : 0;
 
                                 end
 
