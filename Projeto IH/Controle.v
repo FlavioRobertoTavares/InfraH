@@ -66,7 +66,7 @@ module Controle (
                 ALU_src_B = src_B;
         end
         endtask
-        task Shift(input[2:0]op, input[1:0]src, amt); begin
+        task Shift(input[2:0] op, dest, input[1:0]src, amt); begin
                 case(counter)
                         0: begin
                                 sh_ctrl = SH_REG_WRITE;
@@ -76,12 +76,16 @@ module Controle (
                         1:      sh_ctrl = op;
                         2: begin
                                 sh_ctrl = SH_REG_RESET;
-                                Bank_Write(BANK_RT, BANK_SHIFT);
+                                Bank_Write(dest, BANK_SHIFT);
                                 state = FETCH;
                         end
                 endcase
                 counter = (counter < 2)? counter + 1 : 0;
         end
+        endtask
+        task Shift_R(input[2:0]op, input[1:0]src, amt); Shift(op, BANK_RD, src, amt);
+        endtask
+        task Shift_I(input[2:0]op, input[1:0]src, amt); Shift(op, BANK_RT, src, amt);
         endtask
         task Branch(input condition); begin 
                 if (counter == 0) ALU_Operation(ALU_CMP, A_SRC_A, B_SRC_B);
@@ -384,15 +388,15 @@ module Controle (
 
 //----------------------------- Instrucoes de deslocamento
 
-                                SLL: Shift(SH_OP_LEFT, SHIFT_B, SHAMT);
+                                SLL: Shift_R(SH_OP_LEFT, SHIFT_B, SHAMT);
 
-                                SLLV: Shift(SH_OP_LEFT, SHIFT_A, SHIFT_B);
+                                SLLV: Shift_R(SH_OP_LEFT, SHIFT_A, SHIFT_B);
 
-                                SRA: Shift(SH_OP_RA, SHIFT_B, SHAMT);
+                                SRA: Shift_R(SH_OP_RA, SHIFT_B, SHAMT);
 
-                                SRAV: Shift(SH_OP_RA, SHIFT_A, SHIFT_B);
-                                
-                                SRL: Shift(SH_OP_RL, SHIFT_B, SHAMT);
+                                SRAV: Shift_R(SH_OP_RA, SHIFT_A, SHIFT_B);
+
+                                SRL: Shift_R(SH_OP_RL, SHIFT_B, SHAMT);
 
 //----------------------------- Break
 
@@ -514,7 +518,7 @@ module Controle (
 
 //----------------------------- LUI
 
-                                LUI: Shift(SH_OP_LEFT, SHIFT_IMMEDIATE, SHIFT_16);
+                                LUI: Shift_I(SH_OP_LEFT, SHIFT_IMMEDIATE, SHIFT_16);
 
 //----------------------------- Instrucoes de Load
 
@@ -525,7 +529,7 @@ module Controle (
                                 LW: Load(WORD);
 
                                 SRAM: begin
-                                        Shift(SH_OP_RA, SHIFT_B, SHIFT_LOAD);
+                                        Shift_I(SH_OP_RA, SHIFT_B, SHIFT_LOAD);
                                         load_ctrl = WORD;
                                 end
 
