@@ -255,7 +255,7 @@ module Controle (
                                                         BEQ_OP:   state = BEQ;
                                                         BNE_OP:   state = BNE;
                                                         BLE_OP:   state = BLE;
-                                                        BGT_OP:   state = BGT;
+                                                        BGT_OP:   state = BGT; //
                                                         SRAM_OP:  state = MEM;
                                                         LB_OP:    state = MEM;
                                                         LH_OP:    state = MEM;
@@ -266,7 +266,7 @@ module Controle (
                                                         SW_OP:    state = MEM;
                                                         SLTI_OP:  state = SLTI;
                                                         //Tipo J
-                                                        J_OP:     state = J;
+                                                        J_OP:     state = J; //
                                                         JAL_OP:   state = JAL;
                                                         //Opcode inexistente
                                                         default:  state = OPCODE_INEXISTENTE;                   
@@ -413,7 +413,7 @@ module Controle (
 
 //----------------------------- Exchange
 
-                                XCHG: begin // testar pipeline futuramente
+                                XCHG: begin
                                         case(counter)
                                                 0:      ALU_Forward(A_SRC_A);
                                                 1: begin
@@ -426,29 +426,42 @@ module Controle (
                                                 end
                                         endcase
                                         counter = (counter < 2)? counter + 1 : 0;
-
                                 end
 
 //----------------------------- ADDs com imediato
 
                                 ADDI: begin
-                                        signedn = 0;
-                                        ALU_Operation(ALU_ADD, A_SRC_A, B_SRC_IMMEDIATE);
-                                        ALU_out_write = 1;
-                                        state = ADDI_WRITE;
-                                end
-                                ADDIU: begin
-                                        signedn = 1;
-                                        ALU_Operation(ALU_ADD, A_SRC_A, B_SRC_IMMEDIATE);
-                                        ALU_out_write = 1;
-                                        state = ADDI_WRITE;
-                                end
-                                ADDI_WRITE: begin
-                                        ALU_out_write = 0;
-                                        signedn = 0;
-                                        if (state == ADDI && overflow) state = OVERFLOW;
-                                        else begin
+                                        if(counter == 0)begin
+                                                ALU_Operation(ALU_ADD, A_SRC_A, B_SRC_IMMEDIATE);
+                                                ALU_out_write = 1'b1;
+                                                counter = counter + 1;
+                                        end
+                                        else if(overflow == 1) begin
+                                                state = OVERFLOW;
+                                                counter = 0;
+                                        end
+                                        else if(counter == 1) begin
                                                 Bank_Write(BANK_RT, BANK_ALU);
+                                                counter = 0;
+                                                state = FETCH;
+                                        end
+                                end
+
+                                ADDIU: begin
+                                        if(counter == 0)begin
+                                                signedn = 1;
+                                                ALU_Operation(ALU_ADD, A_SRC_A, B_SRC_IMMEDIATE);
+                                                ALU_out_write = 1'b1;
+                                                counter = counter + 1;
+                                        end
+                                        else if(overflow == 1) begin
+                                                state = OVERFLOW;
+                                                counter = 0;
+                                        end
+                                        else if(counter == 1) begin
+                                                signedn = 0;
+                                                Bank_Write(BANK_RT, BANK_ALU);
+                                                counter = 0;
                                                 state = FETCH;
                                         end
                                 end
