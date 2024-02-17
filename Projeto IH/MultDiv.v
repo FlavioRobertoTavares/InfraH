@@ -109,14 +109,15 @@ module MultDiv (
                 i = i + 1;
 
                 if (i == 33) begin
-                    if (A[31] != B[31]) begin
+                    if (A[31] != B[31]) begin //Sinais opostos
+
                     
-                        if (A[31] == 1) begin
+                        if (A[31] == 1) begin  
                             quo = ~quo + 1;
                         end
                         else begin
                             quo = ~quo + 1;
-                            resto = ~resto + 1;
+                            //resto = ~resto + 1;
                         end
 
                     end
@@ -133,7 +134,16 @@ module MultDiv (
 
         end
 
+        else if (DivMultControl == 0) begin
+            DivZero = 0;
+        end
+
     end
+
+    //A = Dividendo
+    //B = Divisor
+    //Lo = quociente
+    //Hi = Resto
 
 endmodule
 

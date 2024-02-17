@@ -454,10 +454,6 @@ module Controle (
                                                 ALU_out_write = 1'b1;
                                                 counter = counter + 1;
                                         end
-                                        else if(overflow == 1) begin
-                                                state = OVERFLOW;
-                                                counter = 0;
-                                        end
                                         else if(counter == 1) begin
                                                 signedn = 0;
                                                 Bank_Write(BANK_RT, BANK_ALU);
